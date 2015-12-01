@@ -319,16 +319,3 @@ void YWMap::plotline(Mat &m, point s, point t, point p, double l, double scale, 
 	cv::Point2d end = p2P(t,p,scale);
 	cv::line(m, start, end, color, thickness, lineType);
 }
-
-/*void MyFilledCircle( Mat img, Point center )
-{
- int thickness = -1;
- int lineType = 8;
-
- circle( ret,
-		 center,
-		 w/32.0,
-		 Scalar( 0, 0, 255 ),
-		 thickness,
-		 lineType );
-}*/
