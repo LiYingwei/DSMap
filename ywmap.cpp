@@ -1,9 +1,8 @@
 #include "ywmap.h"
+#include <cstdio>
 using namespace cv;
-YWMap::YWMap()
-{
-
-}
+using namespace std;
+using namespace pugi;
 
 void YWMap::setDocosm(char* path)
 {
@@ -29,16 +28,45 @@ void YWMap::loadMap()
 		}
 		if(obj.name()[0] == 'w')
 		{
-			for(pugi::xml_node nd = obj.first_child(); strcmp(nd.name(),"nd") == 0; nd = nd.next_sibling())
+			int layerid;
+			string type,subtype;
+			bool iscontour;
+			unsigned firstid=-1, id;
+			pugi::xml_node nd;
+			for(nd = obj.first_child(); strcmp(nd.name(),"nd") == 0; nd = nd.next_sibling())
 			{
-				unsigned id, index;
+				unsigned index;
 				sscanf(nd.attribute("ref").value(), "%ud", &id);
+				if(firstid==-1)firstid = id;
 				index = nodemap[id];
 				nodevec[index].way.push_back(nd);
 			}
-			unsigned id;
+			iscontour = (firstid == id);
+			for(;nd; nd = nd.next_sibling())
+			{
+				pugi::xml_attribute key = nd.first_attribute();
+				pugi::xml_attribute value = key.next_attribute();
+				std::map<pair<std::string,std::string>, unsigned>::iterator it;
+				it = layermap.find(make_pair(key.value(),value.value()));
+				if(it != layermap.end())
+				{
+					layerid = it->second;
+					type = key.value();
+					subtype = value.value();
+					break;
+				}
+				else
+				{
+					it = layermap.find(make_pair(key.value(),"default"));
+					layerid = it->second;
+					type = key.value();
+					subtype = value.value();
+					break;
+				}
+			}
+
 			sscanf(obj.attribute("id").value(), "%ud", &id);
-			wayvec.push_back(way_struct(obj));
+			wayvec.push_back(way_struct(obj,iscontour,layerid,type,subtype));
 			waymap[id] = wayvec.size() - 1;
 		}
 		if(obj.name()[0] == 'r')
@@ -61,9 +89,44 @@ void YWMap::loadMap()
 				else
 				{
 					std::cout << member.attribute("type").value() << std::endl;
-					//assert(0);
+					std::cout << member.parent().attribute("id").value() << std::endl;
+					assert(0);
 				}
 			}
+		}
+	}
+}
+
+void YWMap::loadPlotConf()
+{
+	doc_plot_conf.load("plot_config.xml");
+	pugi::xml_node plot_config = doc_plot_conf.child("YuxinMap");
+	pugi::xml_node layers = plot_config.child("layers");
+	pugi::xml_node elements = plot_config.child("elements");
+	for(pugi::xml_node layer = layers.first_child(); layer; layer = layer.next_sibling())
+	{
+		std::map<std::string,std::string> layerattr; layerattr.clear();
+		for(pugi::xml_attribute attr = layer.first_attribute(); attr; attr = attr.next_attribute())
+			layerattr[attr.name()] = attr.value();
+		layervec.push_back(layerattr);
+		for(pugi::xml_node way = layer.first_child(); way; way = way.next_sibling())
+		{
+			pugi::xml_attribute key = way.first_child().first_attribute();
+			string value = key.next_attribute().as_string("default");
+			layermap[make_pair(key.value(),value)] = layervec.size() - 1;
+		}
+	}
+	for(pugi::xml_node element = elements.first_child(); element; element = element.next_sibling())
+	{
+		std::map<std::string,std::string> elementattr; elementattr.clear();
+		for(pugi::xml_attribute attr = element.first_attribute(); attr; attr = attr.next_attribute())
+			elementattr[attr.name()] = attr.value();
+		elementvec.push_back(elementattr);
+		for(pugi::xml_node way = element.first_child(); way; way = way.next_sibling())
+		{
+			pugi::xml_attribute key = way.first_child().first_attribute();
+			string value = key.next_attribute().as_string("default");
+			elementmap[make_pair(key.value(), value)] = elementvec.size() - 1;
 		}
 	}
 }
@@ -85,7 +148,7 @@ cv::Mat YWMap::Plot(point p, double l, double scale)
 		//std::cout << bg::wkt<point>(node.first) << std::endl;
 	}*/
 
-	for(auto node : nodeset)
+	/*for(auto node : nodeset)
 	{
 		unsigned id = node.second, index = nodemap[id];
 		node_struct &u = nodevec[index];
@@ -110,9 +173,9 @@ cv::Mat YWMap::Plot(point p, double l, double scale)
 					plotline(ret, u.p, v.p, p, l, scale ,Scalar(198,208,214), 4, CV_AA);
 			}
 		}
-	}
+	}*/
 
-	for(auto node : nodeset)
+	/*for(auto node : nodeset)
 	{
 		unsigned id = node.second, index = nodemap[id];
 		node_struct &u = nodevec[index];
@@ -137,16 +200,117 @@ cv::Mat YWMap::Plot(point p, double l, double scale)
 					plotline(ret, u.p, v.p, p, l, scale ,Scalar(255,255,255), 2, CV_AA);
 			}
 		}
+	}*/
+
+	std::vector<layer_point_nd> predraw;
+	for(nodeinfo node: nodeset)
+	{
+		unsigned id = node.second, index = nodemap[id];
+		node_struct &u = nodevec[index];
+		std::set<std::string> contour;
+		for(pugi::xml_node nd : u.way) //layer, point, nd
+		{
+			way_struct way = wayvec[nd.parent().attribute("id").as_uint()];
+			int layer;
+			sscanf(layervec[way.layerid]["id"].c_str(),"%d",layer);
+			bool iscontour = way.iscontour;
+			if(!iscontour)predraw.push_back(layer_point_nd(layer, node.first, nd));
+			else if(contour.find(nd.parent().attribute("id").value()) == contour.end())
+			{
+				contour.insert(nd.parent().attribute("id").value());
+				predraw.push_back(layer_point_nd(layer, node.first, nd.parent()));
+			}
+		}
+	}
+	std::sort(predraw.begin(),predraw.end());
+	std::vector<int> layersize;
+	layersize.clear();
+	for(int i=0;i<predraw.size();i++) if(i==0 || predraw[i].layer!=predraw[i-1].layer)
+		layersize.push_back(1);
+	else layersize[layersize.size()-1]++;
+	int base=0;
+	for(int i=0;i<layersize.size();i++)
+	{
+		bool contour = (predraw[base].nd.name()[0] == 'w');
+		for(int j=0;j<layersize[i];j++)
+		{
+			if(contour)plotPolyLayer(ret, predraw[base + j].nd, p, scale);
+			else plotLineLayer(predraw[base + j].nd); //1 means outline
+			/*{
+				pugi::xml_node &nd = predraw[base + j].nd;
+				unsigned idu,indexu;
+				sscanf(nd.attribute("ref").value(), "ud", &idu);
+				indexu = nodemap[idu];
+				node_struct &u = nodevec[indexu];
+				if(nd!=nd.parent().last_child() && nd.next_sibling().name()[0] == 'n')
+				{
+					unsigned idv, indexv;
+					sscanf(nd.next_sibling().attribute("ref").value(), "%ud", &idv);
+					indexv = nodemap[idv];
+					node_struct &v = nodevec[indexv];
+					plotline(ret, u.p, v.p, p, l, scale ,Scalar(255,255,255), 2, CV_AA);
+				}
+				if(nd!=nd.parent().first_child() && nd.previous_sibling().name()[0] == 'n')
+				{
+					unsigned idv, indexv;
+					sscanf(nd.previous_sibling().attribute("ref").value(), "%ud", &idv);
+					indexv = nodemap[idv];
+					node_struct &v = nodevec[indexv];
+					if(v.p.get<0>() > p.get<0>() || v.p.get<1>() < p.get<1>() ||
+							v.p.get<0>() < p.get<0>() - l || v.p.get<1>() > p.get<1>() + l)
+						plotline(ret, u.p, v.p, p, l, scale ,Scalar(255,255,255), 2, CV_AA);
+				}*/
+		}
+		for(int j=0;j<layersize[i];j++)
+		{
+			if(contour)plotPolyElement(ret, predraw[base + j].nd, p, scale);
+			plotLineElement(predraw[base + j].nd);
+			/*pugi::xml_node &nd = predraw[base].nd;
+			if(nd!=nd.parent().first_child() && nd.previous_sibling().name()[0] == 'n')
+			{
+				unsigned idv, indexv;
+				sscanf(nd.previous_sibling().attribute("ref").value(), "%ud", &idv);
+				indexv = nodemap[idv];
+				node_struct &v = nodevec[indexv];
+				if(v.p.get<0>() > p.get<0>() || v.p.get<1>() < p.get<1>() ||
+						v.p.get<0>() < p.get<0>() - l || v.p.get<1>() > p.get<1>() + l)
+					plotline(ret, u.p, v.p, p, l, scale ,Scalar(255,255,255), 2, CV_AA);
+			}*/
+		}
+		base += layersize[i];
 	}
 	imshow("map", ret);
 	waitKey(0);
 	return ret;
 }
 
-cv::Point2d YWMap::p2P(point v, point p, double scale)
+void YWMap::plotPolyLayer(cv::Mat &img, xml_node way, point p, double scale)
 {
-	cv::Point2d ret((v.get<1>() - p.get<1>()) * scale, (p.get<0>() - v.get<0>()) * scale);
-	return ret;
+	//do nothing.
+}
+
+void YWMap::plotPolyElement(cv::Mat &img, xml_node way, point p, double scale)
+{
+	vector<vector<cv::Point>>contourElement(1);
+	for(pugi::xml_node nd = way.first_child(); nd; nd = nd.next_sibling())
+	{
+		point v = nodevec[nodemap[nd.attribute("ref").as_uint()]].p;
+		contourElement[0].push_back(p2P(v,p,scale));
+	}
+	vector<cv::Point> tmp = contourElement.at(0);
+	const cv::Point* elementPoints[1] = { &tmp[0] };
+	int numberOfPoints = (int)tmp.size();
+	cv::fillPoly(img, elementPoints, &numberOfPoints, 1, Scalar (0, 0, 0), 8);
+}
+
+void YWMap::plotLineElement(xml_node nd)
+{
+	// TODO :
+}
+
+void YWMap::plotLineLayer(xml_node nd)
+{
+	// TODO :
 }
 
 void YWMap::plotline(Mat &m, point s, point t, point p, double l, double scale, Scalar color, int thickness, int lineType)

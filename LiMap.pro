@@ -35,3 +35,5 @@ HEADERS += \
     ywmap.h \
     Libs/pugixml/pugiconfig.hpp \
     Libs/pugixml/pugixml.hpp
+
+QMAKE_MAC_SDK = macosx10.11
