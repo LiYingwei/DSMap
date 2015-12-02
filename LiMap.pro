@@ -18,7 +18,10 @@ TEMPLATE = app
 
 SOURCES += main.cpp \
     ywmap.cpp \
-    Libs/pugixml/pugixml.cpp
+    Libs/pugixml/pugixml.cpp \
+    load.cpp \
+    ploymethods.cpp \
+    plot.cpp
 
 INCLUDEPATH += /usr/local/include
 
