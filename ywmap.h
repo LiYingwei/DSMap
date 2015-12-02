@@ -57,7 +57,7 @@ struct layer_point_nd
 class YWMap
 {
 public:
-	YWMap();
+	//YWMap();
 	void setDocosm(char* path);
 	void loadPlotConf();
 	void loadMap(); //load map node to rtree, way and relation to map(id -> xml_node)

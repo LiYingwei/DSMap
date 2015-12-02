@@ -1,5 +1,6 @@
 #include "ywmap.h"
 #include <cstdio>
+#define DEBUG_3
 using namespace cv;
 using namespace std;
 using namespace pugi;
@@ -28,7 +29,7 @@ void YWMap::loadMap()
 		}
 		if(obj.name()[0] == 'w')
 		{
-			int layerid;
+			int layerid=5;
 			string type,subtype;
 			bool iscontour;
 			unsigned firstid=-1, id;
@@ -50,22 +51,39 @@ void YWMap::loadMap()
 				it = layermap.find(make_pair(key.value(),value.value()));
 				if(it != layermap.end())
 				{
+#ifdef DEBUG_3
+					printf("hit type(%s,%s)\n", key.value(),value.value());
+#endif
 					layerid = it->second;
+					assert(layerid>=0 && layerid<layervec.size());
 					type = key.value();
 					subtype = value.value();
 					break;
 				}
-				else
+				else if( (it = layermap.find(make_pair(key.value(),"default"))) != layermap.end() )
 				{
-					it = layermap.find(make_pair(key.value(),"default"));
+#ifdef DEBUG_3
+					printf("hit type(%s,%s)\n", key.value(),"default");
+#endif
 					layerid = it->second;
+					assert(layerid>=0 && layerid<layervec.size());
 					type = key.value();
 					subtype = value.value();
 					break;
 				}
+				else if(key.as_string() == "layer")
+				{
+					layerid = value.as_int(0) + 5;
+					break;
+				}
+
 			}
 
 			sscanf(obj.attribute("id").value(), "%ud", &id);
+			assert(layerid>=0 && layerid<layervec.size());
+#ifdef DEBUG_3
+			if(layerid<11) printf("not hit anything layer=%d\n",layerid - 5);
+#endif
 			wayvec.push_back(way_struct(obj,iscontour,layerid,type,subtype));
 			waymap[id] = wayvec.size() - 1;
 		}
@@ -99,10 +117,12 @@ void YWMap::loadMap()
 
 void YWMap::loadPlotConf()
 {
-	doc_plot_conf.load("plot_config.xml");
+	assert(doc_plot_conf.load_file("plot_config.xml"));
 	pugi::xml_node plot_config = doc_plot_conf.child("YuxinMap");
 	pugi::xml_node layers = plot_config.child("layers");
 	pugi::xml_node elements = plot_config.child("elements");
+	layervec.clear();
+	layervec.resize(11);
 	for(pugi::xml_node layer = layers.first_child(); layer; layer = layer.next_sibling())
 	{
 		std::map<std::string,std::string> layerattr; layerattr.clear();
@@ -129,6 +149,8 @@ void YWMap::loadPlotConf()
 			elementmap[make_pair(key.value(), value)] = elementvec.size() - 1;
 		}
 	}
+	for(auto it = layermap.begin(); it != layermap.end(); it++)
+		printf("%s, %s\n",it->first.first.c_str(), it->first.second.c_str());
 }
 
 cv::Mat YWMap::Plot(point p, double l, double scale)
@@ -140,6 +162,9 @@ cv::Mat YWMap::Plot(point p, double l, double scale)
 	box query_box(point(p.get<0>() - l, p.get<1>()), point(p.get<0>(), p.get<1>() + l));
 	std::vector<nodeinfo> nodeset;
 	nodertree.query(bgi::intersects(query_box), std::back_inserter(nodeset));
+
+	printf("Query Finished\n");
+
 	/*for(auto node : nodeset)
 	{
 		cv::Point2d nodepoint((node.first.get<1>() - p.get<1>()) * scale, (p.get<0>() - node.first.get<0>()) * scale); //没有搞清楚坐标情况，反正现在是对的。。
@@ -210,19 +235,24 @@ cv::Mat YWMap::Plot(point p, double l, double scale)
 		std::set<std::string> contour;
 		for(pugi::xml_node nd : u.way) //layer, point, nd
 		{
-			way_struct way = wayvec[nd.parent().attribute("id").as_uint()];
+			//printf("%d\n",waymap[nd.parent().attribute("id").as_uint()]);
+			way_struct way = wayvec[waymap[nd.parent().attribute("id").as_uint()]];
 			int layer;
-			sscanf(layervec[way.layerid]["id"].c_str(),"%d",layer);
+			//printf("%d %d\n",way.layerid, layervec.size());
+			sscanf(layervec[way.layerid]["layer"].c_str(),"%d",&layer);
 			bool iscontour = way.iscontour;
-			if(!iscontour)predraw.push_back(layer_point_nd(layer, node.first, nd));
+			/*if(!iscontour)predraw.push_back(layer_point_nd(layer, node.first, nd));
 			else if(contour.find(nd.parent().attribute("id").value()) == contour.end())
 			{
 				contour.insert(nd.parent().attribute("id").value());
 				predraw.push_back(layer_point_nd(layer, node.first, nd.parent()));
-			}
+			}*/
 		}
 	}
 	std::sort(predraw.begin(),predraw.end());
+
+	printf("Sort Finished\n");
+
 	std::vector<int> layersize;
 	layersize.clear();
 	for(int i=0;i<predraw.size();i++) if(i==0 || predraw[i].layer!=predraw[i-1].layer)
@@ -300,7 +330,7 @@ void YWMap::plotPolyElement(cv::Mat &img, xml_node way, point p, double scale)
 	vector<cv::Point> tmp = contourElement.at(0);
 	const cv::Point* elementPoints[1] = { &tmp[0] };
 	int numberOfPoints = (int)tmp.size();
-	cv::fillPoly(img, elementPoints, &numberOfPoints, 1, Scalar (0, 0, 0), 8);
+	cv::fillPoly(img, elementPoints, &numberOfPoints, 1, Scalar (0, 0, 255), 8);
 }
 
 void YWMap::plotLineElement(xml_node nd)
