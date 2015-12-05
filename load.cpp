@@ -40,26 +40,62 @@ void YWMap::loadMap()
 	{
 		unsigned id = obj.attribute("id").as_uint(-1);
 		pugi::xml_node tag;
-		std::string waytype = "not a way";
+		std::string type="default", subtype="default";
 		int layer=0;
 		bool bridge=false;
 		for(tag = obj.last_child(); strcmp(tag.name(),"tag") == 0; tag = tag.previous_sibling())
 		{
-			if(tag.attribute("k").as_string() == std::string("highway") ) waytype = tag.attribute("v").as_string("default");
+			//if(tag.attribute("k").as_string() == std::string("highway") ) waytype = tag.attribute("v").as_string("default");
+			auto it = elementmap.find(make_pair(tag.attribute("k").as_string(),tag.attribute("v").as_string()));
+			if(it != elementmap.end()) type = it->first.first, subtype = it->first.second;
+
 			if(tag.attribute("k").as_string() == std::string("layer") ) layer = tag.attribute("v").as_int();
 			if(tag.attribute("k").as_string() == std::string("bridge") ) bridge = true;
 		}
-		if(waytype != "not a way")
+
+		auto it = elementmap.find(make_pair(type,subtype));
+		if(it == elementmap.end())
 		{
-			auto it = elementmap.find(make_pair("highway",waytype));
-			if(it == elementmap.end())
+#ifdef DEBUG
+			if(type!="default")printf("type,subtype %s,%s not found\n",type.c_str(), subtype.c_str());
+#endif
+			continue;
+		}
+		if(elementvec[it->second]["method"] == std::string("fill_poly"))
+		{
+			auto &elem = elementvec[it->second];
+			cv::Scalar color = hex2BGR(elem["color"]), ccolor = color;
+			auto itl = layermap.find(make_pair(type,subtype));
+			if(itl!=layermap.end())
+			{
+				auto& lay = layervec[itl->second];
+				if(lay.find("color")!=lay.end())ccolor = hex2BGR(lay["color"]);
+				if(layer == 0) sscanf(lay["layer"].c_str(),"%d",&layer);
+			}
+			double x1=361,x2=-361,y1=361,y2=-361;
+			for(pugi::xml_node nd = tag; nd; nd = nd.previous_sibling())
+			{
+				node_struct &node = nodevec[nodemap[nd.attribute("ref").as_uint()]];
+				x1 = min(x1,node.p.get<0>());
+				x2 = max(x2,node.p.get<1>());
+				y1 = min(y1,node.p.get<0>());
+				y2 = max(y2,node.p.get<1>());
+				node.isbuilding = true;
+			}
+			building_struct build(id,layer,type,subtype,color,ccolor,1,obj,box(point(x1,y1),point(x2,y2)));
+			buildvec.push_back(build);
+			buildmap[id]=buildvec.size()-1;
+		}
+		else if(type == "highway")
+		{
+/*			if(it == elementmap.end())
 			{
 #ifdef DEBUG1
 				printf("highway type not found: %s", waytype.c_str());
 #endif
 				continue; // this way is ignored
-			}
-			auto &elem = elementvec[elementmap[make_pair("highway",waytype)]];
+			}*/
+			auto &elem = elementvec[elementmap[make_pair("highway",subtype)]];
 			cv::Scalar color = hex2BGR(elem["color"]), ccolor(0xD0,0xCA,0xC1);
 			int thickness,boundthick=1;
 			if(bridge)
@@ -68,7 +104,7 @@ void YWMap::loadMap()
 				ccolor = color;
 			}
 			sscanf(elem["thickness"].c_str(),"%d", &thickness);
-			wayvec.push_back(way_struct(id, layer, waytype,color,ccolor,thickness,boundthick));
+			wayvec.push_back(way_struct(id, layer, subtype,color,ccolor,thickness,boundthick));
 			waymap[id] = wayvec.size() - 1;
 			pugi::xml_node nd;
 			for(nd = tag; nd; nd = nd.previous_sibling())
@@ -95,6 +131,12 @@ void YWMap::loadMap()
 #endif
 		way_node_tree.insert(std::make_pair(node.p,i));
 	} //else printf("not a way\n");
+/////////////////////把建筑信息加入R树////////////////////////
+	for(int i=0;i<buildvec.size(); i++)
+	{
+		building_struct& b = buildvec[i];
+		build_tree.insert(std::make_pair(b.b,i));
+	}
 }
 
 void YWMap::loadPlotConf()

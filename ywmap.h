@@ -48,6 +48,22 @@ struct way_struct
 	}
 };
 
+struct building_struct
+{
+	unsigned id;
+	int layer;
+	std::string type, subtype;
+	cv::Scalar color,ccolor;
+	int boundthick;
+	pugi::xml_node building;
+	box b;
+	building_struct(unsigned id, int layer, std::string type, std::string subtype,
+					cv::Scalar color, cv::Scalar ccolor, int boundthick,pugi::xml_node building, box b):
+		id(id),layer(layer),type(type),subtype(subtype),color(color),ccolor(ccolor),boundthick(boundthick),building(building),b(b)
+	{
+	}
+};
+
 class YWMap
 {
 public:
@@ -56,12 +72,15 @@ public:
 	void loadMap(); //load map node to rtree, way and relation to map(id -> xml_node)
 	cv::Mat Plot(point p, double l, double scale);
 private:
+	//bool sortLayerCmp(std::pair<int,std::pair<box, unsigned>> a,std::pair<int,std::pair<box, unsigned>> b);
 	pugi::xml_document doc_osm,doc_plot_conf;
 
 	std::vector<node_struct> nodevec;
 	std::map<unsigned, unsigned> nodemap; // id -> index
 	std::vector<way_struct> wayvec;
 	std::map<unsigned, unsigned> waymap;
+	std::vector<building_struct> buildvec;
+	std::map<unsigned, unsigned> buildmap;
 
 	std::map<std::pair<std::string,std::string>, unsigned> layermap;
 	std::vector<std::map<std::string,std::string>> layervec;
@@ -69,6 +88,10 @@ private:
 	std::vector<std::map<std::string,std::string>> elementvec;
 
 	bgi::rtree< std::pair<point,unsigned> , bgi::quadratic<16> > way_node_tree;  // point -> index of nodevec
+	bgi::rtree< std::pair<box,unsigned> , bgi::quadratic<16> > build_tree;  // box -> index of buildvec
+
+	void PlotWay(cv::Mat& ret,point p, double l, double scale);
+	void PlotContour(cv::Mat& ret,point p, double l, double scale);
 
 	cv::Scalar hex2BGR(std::string hex);
 	cv::Point2d p2P(point v, point p, double scale);
@@ -77,6 +100,7 @@ private:
 	void plotLineFill(cv::Mat &ret,pugi::xml_node nd, point p, double l, double scale);
 	void plotline(cv::Mat &m, point start, point end, point p, double l, double scale,
 				  cv::Scalar color, int thickness, int lineType=CV_AA);
+	void plotPoly(cv::Mat &img, pugi::xml_node way, point p, double scale, cv::Scalar color, cv::Scalar ccolor, int boundthick);
 
 	/*void plotPolyLayer(cv::Mat &img, pugi::xml_node way, point p, double scale);
 	void plotPolyElement(cv::Mat &img, pugi::xml_node way, point p, double scale);

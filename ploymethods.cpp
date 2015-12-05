@@ -5,23 +5,24 @@ using namespace pugi;
 void YWMap::plotPolyLayer(cv::Mat &img, xml_node way, point p, double scale)
 {
 	//do nothing.
-}
+}*/
 
-void YWMap::plotPolyElement(cv::Mat &img, xml_node way, point p, double scale)
+void YWMap::plotPoly(cv::Mat &img, pugi::xml_node way, point p, double scale,cv::Scalar color,cv::Scalar ccolor, int boundthick)
 {
-	vector<vector<cv::Point>>contourElement(1);
+	std::vector<std::vector<cv::Point>>contourElement(1);
 	for(pugi::xml_node nd = way.first_child(); nd; nd = nd.next_sibling())
 	{
+		if(nd.attribute("ref").as_uint()==0)break;
 		point v = nodevec[nodemap[nd.attribute("ref").as_uint()]].p;
 		contourElement[0].push_back(p2P(v,p,scale));
 	}
-	vector<cv::Point> tmp = contourElement.at(0);
+	std::vector<cv::Point> tmp = contourElement.at(0);
 	const cv::Point* elementPoints[1] = { &tmp[0] };
 	int numberOfPoints = (int)tmp.size();
-	cv::fillPoly(img, elementPoints, &numberOfPoints, 1, Scalar (0, 0, 255), 8);
+	cv::fillPoly(img, elementPoints, &numberOfPoints, 1, color, CV_AA);
 }
 
-void YWMap::plotLineElement(xml_node nd)
+/*void YWMap::plotLineElement(xml_node nd)
 {
 	// TODO :
 }
