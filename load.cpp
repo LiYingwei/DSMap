@@ -12,16 +12,16 @@ void YWMap::setDocosm(char* path)
 void YWMap::loadMap()
 {
 	pugi::xml_node osm = doc_osm.child("osm");
-	pugi::xml_node obj;
+	pugi::xml_node obj = osm.first_child(); // the first child is bounds, ignore it temporarily
 /////////////////////把node的信息存入nodevec，nodemap是从id到下标的映射///////////////////////
-	for(obj = osm.first_child(); strcmp(obj.name(),"node") == 0; obj = obj.next_sibling())
+	for(obj = obj.next_sibling(); strcmp(obj.name(),"node") == 0; obj = obj.next_sibling())
 	{
 		unsigned id = obj.attribute("id").as_uint(-1);
 		point p(obj.attribute("lat").as_double(-1),obj.attribute("lon").as_double(-1));
 #ifdef DEBUG
 		assert(id != -1 && p.get<0>() != -1 && p.get<1>() != -1);
 #endif
-		nodevec.push_back(node_struct(id,p,obj, 0, 0));
+		nodevec.push_back(node_struct(id,p,obj, false, false));
 		nodemap[id] = nodevec.size() - 1;
 	}
 /////////////////把way的信息存入wayvec，并且更新nodevec的isway和nd_in_way信息////////////////////
@@ -52,25 +52,28 @@ void YWMap::loadMap()
 			sscanf(elem["thickness"].c_str(),"%d", &thickness);
 			wayvec.push_back(way_struct(id, layer, waytype,color,cv::Scalar(0xD0,0xCA,0xC1),thickness,1));
 			waymap[id] = wayvec.size() - 1;
-		}
-		pugi::xml_node nd;
-		for(nd = tag; nd; nd = nd.previous_sibling())
-		{
-			unsigned ref = tag.attribute("ref").as_uint(-1);
+			pugi::xml_node nd;
+			for(nd = tag; nd; nd = nd.previous_sibling())
+			{
+				unsigned ref = tag.attribute("ref").as_uint(-1);
 #ifdef DEBUG
-			assert(ref != -1);
+				assert(ref != -1);
 #endif
-			unsigned index = nodemap[ref];
-			nodevec[index].isway = true;
-			nodevec[index].nd_in_way.push_back(nd);
+				unsigned index = nodemap[ref];
+				nodevec[index].isway = true;
+				nodevec[index].nd_in_way.push_back(nd);
+			}
 		}
 	}
 /////////////////////把节点信息加入R树////////////////////////
 	for(int i = 0; i < nodevec.size(); i++) if(nodevec[i].isway)
 	{
 		node_struct & node = nodevec[i];
+#ifdef INFO
+		//printf("node No.%u in a way\n",node.id);
+#endif
 		way_node_tree.insert(std::make_pair(node.p,i));
-	}
+	} //else printf("not a way\n");
 }
 
 void YWMap::loadPlotConf()

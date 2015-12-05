@@ -1,5 +1,7 @@
 #ifndef YWMAP_H
 #define YWMAP_H
+#define DEBUG
+#define INFO
 #include <string>
 #include <vector>
 #include <opencv2/core/core.hpp>
@@ -66,14 +68,17 @@ private:
 	std::map<std::pair<std::string,std::string>, unsigned> elementmap;
 	std::vector<std::map<std::string,std::string>> elementvec;
 
-	bgi::rtree< std::pair<point,unsigned> , bgi::quadratic<16> > way_node_tree;
+	bgi::rtree< std::pair<point,unsigned> , bgi::quadratic<16> > way_node_tree;  // point -> index of nodevec
 
 	cv::Scalar hex2BGR(std::string hex);
 	cv::Point2d p2P(point v, point p, double scale);
-	/*void plotline(cv::Mat &m, point start, point end, point p, double l, double scale,
-				  cv::Scalar color, int thickness, int lineType=8);
 
-	void plotPolyLayer(cv::Mat &img, pugi::xml_node way, point p, double scale);
+	void plotLineBound(cv::Mat &ret,pugi::xml_node nd, point p, double l, double scale);
+	void plotLineFill(cv::Mat &ret,pugi::xml_node nd, point p, double l, double scale);
+	void plotline(cv::Mat &m, point start, point end, point p, double l, double scale,
+				  cv::Scalar color, int thickness, int lineType=CV_AA);
+
+	/*void plotPolyLayer(cv::Mat &img, pugi::xml_node way, point p, double scale);
 	void plotPolyElement(cv::Mat &img, pugi::xml_node way, point p, double scale);
 	void plotLineLayer(pugi::xml_node nd);
 	void plotLineElement(pugi::xml_node nd);*/

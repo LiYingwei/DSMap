@@ -8,7 +8,11 @@ int main(int argc, char *argv[])
 	map.setDocosm("map.osm");
 	map.loadMap();
 	printf("Load Finished!\n");
-//	map.Plot(point(31.20,121.585),0.01, 70000);
+	cv::Mat show = map.Plot(point(31.20,121.585),0.01, 500000);
 	printf("Plot Finished!\n");
+	//cv::resize(show,show,cv::Size(700,683));
+	//cv::imshow("show", show);
+	cv::imwrite("image.png",show);
+	//cv::waitKey(0);
 	return a.exec();
 }
