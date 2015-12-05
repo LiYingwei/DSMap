@@ -13,9 +13,17 @@ void YWMap::loadMap()
 {
 	pugi::xml_node osm = doc_osm.child("osm");
 	pugi::xml_node obj = osm.first_child(); // the first child is bounds, ignore it temporarily
+	//while(strcmp(obj.value(),"node") != 0) {obj=obj.next_sibling();printf("%s\n",obj.value());}
 /////////////////////把node的信息存入nodevec，nodemap是从id到下标的映射///////////////////////
-	for(obj = obj.next_sibling(); strcmp(obj.name(),"node") == 0; obj = obj.next_sibling())
+#ifdef INFO
+	int cnt=0;
+#endif
+	for(obj = osm.child("node") ; strcmp(obj.name(),"node") == 0; obj = obj.next_sibling())
 	{
+#ifdef INFO
+		cnt++;
+		if(cnt % 100000==0) printf("Adding node No.%d\n",cnt);
+#endif
 		unsigned id = obj.attribute("id").as_uint(-1);
 		point p(obj.attribute("lat").as_double(-1),obj.attribute("lon").as_double(-1));
 #ifdef DEBUG
@@ -24,6 +32,9 @@ void YWMap::loadMap()
 		nodevec.push_back(node_struct(id,p,obj, false, false));
 		nodemap[id] = nodevec.size() - 1;
 	}
+#ifdef INFO
+	printf("Node added!\n");
+#endif
 /////////////////把way的信息存入wayvec，并且更新nodevec的isway和nd_in_way信息////////////////////
 	for( ;strcmp(obj.name(),"way") == 0; obj = obj.next_sibling())
 	{
@@ -31,10 +42,12 @@ void YWMap::loadMap()
 		pugi::xml_node tag;
 		std::string waytype = "not a way";
 		int layer=0;
+		bool bridge=false;
 		for(tag = obj.last_child(); strcmp(tag.name(),"tag") == 0; tag = tag.previous_sibling())
 		{
 			if(tag.attribute("k").as_string() == std::string("highway") ) waytype = tag.attribute("v").as_string("default");
 			if(tag.attribute("k").as_string() == std::string("layer") ) layer = tag.attribute("v").as_int();
+			if(tag.attribute("k").as_string() == std::string("bridge") ) bridge = true;
 		}
 		if(waytype != "not a way")
 		{
@@ -47,15 +60,20 @@ void YWMap::loadMap()
 				continue; // this way is ignored
 			}
 			auto &elem = elementvec[elementmap[make_pair("highway",waytype)]];
-			cv::Scalar color = hex2BGR(elem["color"]);
-			int thickness;
+			cv::Scalar color = hex2BGR(elem["color"]), ccolor(0xD0,0xCA,0xC1);
+			int thickness,boundthick=1;
+			if(bridge)
+			{
+				boundthick = 0;
+				ccolor = color;
+			}
 			sscanf(elem["thickness"].c_str(),"%d", &thickness);
-			wayvec.push_back(way_struct(id, layer, waytype,color,cv::Scalar(0xD0,0xCA,0xC1),thickness,1));
+			wayvec.push_back(way_struct(id, layer, waytype,color,ccolor,thickness,boundthick));
 			waymap[id] = wayvec.size() - 1;
 			pugi::xml_node nd;
 			for(nd = tag; nd; nd = nd.previous_sibling())
 			{
-				unsigned ref = tag.attribute("ref").as_uint(-1);
+				unsigned ref = nd.attribute("ref").as_uint(-1);
 #ifdef DEBUG
 				assert(ref != -1);
 #endif
@@ -65,6 +83,9 @@ void YWMap::loadMap()
 			}
 		}
 	}
+#ifdef INFO
+	printf("Way added!\n");
+#endif
 /////////////////////把节点信息加入R树////////////////////////
 	for(int i = 0; i < nodevec.size(); i++) if(nodevec[i].isway)
 	{

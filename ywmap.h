@@ -1,7 +1,7 @@
 #ifndef YWMAP_H
 #define YWMAP_H
 #define DEBUG
-#define INFO
+//#define INFO
 #include <string>
 #include <vector>
 #include <opencv2/core/core.hpp>

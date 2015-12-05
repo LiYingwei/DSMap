@@ -7,9 +7,9 @@ using namespace pugi;
 
 cv::Scalar YWMap::hex2BGR(std::string hex)
 {
-	std::string b = hex.substr(1,2);
+	std::string r = hex.substr(1,2);
 	std::string g = hex.substr(3,2);
-	std::string r = hex.substr(5,2);
+	std::string b = hex.substr(5,2);
 	b = std::string("0x") + b;
 	g = std::string("0x") + g;
 	r = std::string("0x") + r;

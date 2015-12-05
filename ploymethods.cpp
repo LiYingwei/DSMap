@@ -74,7 +74,8 @@ void YWMap::plotLineFill(cv::Mat &ret, pugi::xml_node nd, point p, double l, dou
 	assert(wayid != -1);
 #endif
 	way_struct way = wayvec[waymap[wayid]];
-	point u = nodevec[nodemap[nd.attribute("ref").as_uint()]].p;
+	node_struct &node = nodevec[nodemap[nd.attribute("ref").as_uint()]];
+	point u = node.p;
 
 	pugi::xml_node nextpoint = nd.next_sibling();
 	if(strcmp(nextpoint.name(),"nd") == 0)
@@ -91,4 +92,35 @@ void YWMap::plotLineFill(cv::Mat &ret, pugi::xml_node nd, point p, double l, dou
 								v.get<0>() < p.get<0>() - l || v.get<1>() > p.get<1>() + l)
 			plotline(ret, u, v, p, l, scale, way.color, way.thickness, CV_AA);
 	}
+
+	/*if(nd.parent().first_child() == nd || nd.next_sibling().value()[0] != 'n')
+	{
+#ifdef DEBUG
+		cv::circle(ret, p2P(u,p,scale),5,cv::Scalar(0,0,255),1,CV_AA);
+		printf("nodeid:%u\n",nd.attribute("ref").as_uint());
+#endif
+		for(pugi::xml_node Nd : node.nd_in_way)
+		{
+			printf("	wayid=%u\n",Nd.parent().attribute("id").as_uint());
+			//if(Nd != nd)
+			if(Nd == Nd.parent().first_child())
+			{
+				pugi::xml_node nextpoint = Nd.next_sibling();
+				printf("Nd=%u next=%u\n", Nd.attribute("ref").as_uint(), nextpoint.attribute("ref").as_uint());
+				point v = nodevec[nodemap[nextpoint.attribute("ref").as_uint()]].p;
+				if(v.get<0>() > p.get<0>() || v.get<1>() < p.get<1>() ||
+										v.get<0>() < p.get<0>() - l || v.get<1>() > p.get<1>() + l)
+					plotline(ret, u, v, p, l, scale, way.color, way.thickness, CV_AA);
+			}
+			else if(strcmp(Nd.next_sibling().value(),"nd") != 0)
+			{
+				pugi::xml_node prepoint = Nd.previous_sibling();
+				point v = nodevec[nodemap[prepoint.attribute("ref").as_uint()]].p;
+				if(v.get<0>() > p.get<0>() || v.get<1>() < p.get<1>() ||
+										v.get<0>() < p.get<0>() - l || v.get<1>() > p.get<1>() + l)
+					plotline(ret, u, v, p, l, scale, way.color, way.thickness, CV_AA);
+			}
+		}
+
+	}*/
 }
