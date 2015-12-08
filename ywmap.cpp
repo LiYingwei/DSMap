@@ -20,7 +20,7 @@ cv::Scalar YWMap::hex2BGR(std::string hex)
 	return cv::Scalar(B,G,R);
 }
 
-cv::Point2d YWMap::p2P(point v, point p, double scale)
+cv::Point2d YWMap::p2P(point v, point p, double scalex, double scaley)
 {
-	return cv::Point2d((v.get<1>() - p.get<1>()) * scale, (p.get<0>() - v.get<0>()) * scale);
+	return cv::Point2d((v.get<1>() - p.get<1>()) * scalex, (p.get<0>() - v.get<0>()) * scaley);
 }

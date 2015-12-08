@@ -3,6 +3,7 @@ cv::Mat YWMap::Plot(point p, double l, double scale)
 {
 	double scalex = scale, scaley = cos(p.get<0>()) * scale;
 	int r = l * scalex, c = l * scaley;
+	this->p = p;this->l = l;this -> scalex = scalex;this->scaley = scaley;
 #ifdef INFO
 	printf("%d %d\n", r, c);
 #endif
@@ -31,7 +32,7 @@ void YWMap::PlotContour(cv::Mat &ret, point p, double l, double scale)
 	for(auto build : builds)
 	{
 		building_struct &b = buildvec[build.second];
-		plotPoly(ret, b.building, p, scale,b.color,b.ccolor,b.boundthick);
+		plotPoly(ret, b.building, p,b.color,b.ccolor,b.boundthick);
 	}
 }
 
@@ -72,9 +73,9 @@ void YWMap::PlotWay(cv::Mat &ret, point p, double l, double scale)
 	{
 		int j;
 		for(j=i;j< layerSorted.size() && layerSorted[j].first == nowlayer; j++)
-			plotLineBound(ret,layerSorted[j].second, p, l, scale);
+			plotLineBound(ret,layerSorted[j].second, p, l);
 		for(j=i;j< layerSorted.size() && layerSorted[j].first == nowlayer; j++)
-			plotLineFill(ret,layerSorted[j].second, p, l, scale);
+			plotLineFill(ret,layerSorted[j].second, p, l);
 		if(j==layerSorted.size())break;
 		nowlayer = layerSorted[j].first;
 		i = j;

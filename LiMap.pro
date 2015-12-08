@@ -21,7 +21,8 @@ SOURCES += main.cpp \
     Libs/pugixml/pugixml.cpp \
     load.cpp \
     ploymethods.cpp \
-    plot.cpp
+    plot.cpp \
+    shortestpath.cpp
 
 INCLUDEPATH += /usr/local/include
 

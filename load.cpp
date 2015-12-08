@@ -42,7 +42,7 @@ void YWMap::loadMap()
 		pugi::xml_node tag;
 		std::string type="default", subtype="default";
 		int layer=0;
-		bool bridge=false;
+		bool bridge=false, oneway = false;
 		for(tag = obj.last_child(); strcmp(tag.name(),"tag") == 0; tag = tag.previous_sibling())
 		{
 			//if(tag.attribute("k").as_string() == std::string("highway") ) waytype = tag.attribute("v").as_string("default");
@@ -51,6 +51,8 @@ void YWMap::loadMap()
 
 			if(tag.attribute("k").as_string() == std::string("layer") ) layer = tag.attribute("v").as_int();
 			if(tag.attribute("k").as_string() == std::string("bridge") ) bridge = true;
+			if(tag.attribute("k").as_string() == std::string("oneway") && tag.attribute("v").as_string() == std::string("yes"))
+				oneway = true;
 		}
 
 		auto it = elementmap.find(make_pair(type,subtype));
@@ -104,7 +106,9 @@ void YWMap::loadMap()
 				ccolor = color;
 			}
 			sscanf(elem["thickness"].c_str(),"%d", &thickness);
-			wayvec.push_back(way_struct(id, layer, subtype,color,ccolor,thickness,boundthick));
+			double speed = normalSpeed[std::make_pair(type, subtype)];
+			double slowspeed = slowSpeed[std::make_pair(type, subtype)];
+			wayvec.push_back(way_struct(id, layer, subtype,color,ccolor,thickness,boundthick,speed,slowspeed,oneway));
 			waymap[id] = wayvec.size() - 1;
 			pugi::xml_node nd;
 			for(nd = tag; nd; nd = nd.previous_sibling())
@@ -116,27 +120,41 @@ void YWMap::loadMap()
 				unsigned index = nodemap[ref];
 				nodevec[index].isway = true;
 				nodevec[index].nd_in_way.push_back(nd);
+				if(nd == tag || nd == nd.parent().first_child()) nodevec[index].fanout++;
+				else nodevec[index].fanout += 2;
+
+				if(nd != tag)addEdge(nodemap[nd.attribute("ref").as_uint()], nodemap[nd.next_sibling().attribute("ref").as_uint()],speed, slowspeed, oneway);
 			}
 		}
 	}
 #ifdef INFO
 	printf("Way added!\n");
 #endif
-/////////////////////把节点信息加入R树////////////////////////
+////////////////把节点信息加入R树以及取出重要点///////////////////
+#ifdef DEBUG
+	int nodenum = 0, importantnodenum = 0;
+#endif
 	for(int i = 0; i < nodevec.size(); i++) if(nodevec[i].isway)
 	{
 		node_struct & node = nodevec[i];
+#ifdef DEBUG
+		nodenum ++;
+		if(node.fanout != 2) importantnodenum ++;
+#endif
 #ifdef INFO
 		//printf("node No.%u in a way\n",node.id);
 #endif
 		way_node_tree.insert(std::make_pair(node.p,i));
-	} //else printf("not a way\n");
+	};
 /////////////////////把建筑信息加入R树////////////////////////
 	for(int i=0;i<buildvec.size(); i++)
 	{
 		building_struct& b = buildvec[i];
 		build_tree.insert(std::make_pair(b.b,i));
 	}
+#ifdef DEBUG
+	printf("Edge num : %d\nNode num : %d\nNode(fanout = 2) num : %d\n", E.size(), nodenum, importantnodenum);
+#endif
 }
 
 void YWMap::loadPlotConf()
@@ -174,4 +192,28 @@ void YWMap::loadPlotConf()
 	}
 	/*for(auto it = layermap.begin(); it != layermap.end(); it++)
 		printf("%s, %s\n",it->first.first.c_str(), it->first.second.c_str());*/
+}
+
+void YWMap::loadSpeedConf()
+{
+	doc_speed_conf.load_file("ShortestPath.conf");
+	pugi::xml_node YuxinMap = doc_speed_conf.child("YuxinMap");
+	pugi::xml_node normal = YuxinMap.first_child();
+	pugi::xml_node slow = normal.next_sibling();
+	for(pugi::xml_node way = normal.first_child(); way; way = way.next_sibling())
+	{
+		double speed = way.attribute("speed").as_double();
+		pugi::xml_node tag = way.first_child();
+		std::string type = tag.attribute("k").as_string();
+		std::string subtype = tag.attribute("v").as_string();
+		normalSpeed[std::make_pair(type,subtype)] = speed;
+	}
+	for(pugi::xml_node way = slow.first_child(); way; way = way.next_sibling())
+	{
+		double speed = way.attribute("speed").as_double();
+		pugi::xml_node tag = way.first_child();
+		std::string type = tag.attribute("k").as_string();
+		std::string subtype = tag.attribute("v").as_string();
+		slowSpeed[std::make_pair(type,subtype)] = speed;
+	}
 }
