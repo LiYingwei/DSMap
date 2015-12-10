@@ -3,7 +3,7 @@
 double YWMap::nodeDist(point p1, point p2)
 {
 #define sqr(a) ((a)*(a))
-	return sqr(p1.get<0>() - p2.get<0>()) + sqr( (p1.get<1>() - p2.get<1>()) * cos(p1.get<0>()));
+	return sqrt(sqr(p1.get<0>() - p2.get<0>()) + sqr( (p1.get<1>() - p2.get<1>()) * cos(p1.get<0>())));
 #undef sqr
 }
 
@@ -45,28 +45,29 @@ std::vector<unsigned> YWMap::SPFA(unsigned startid, unsigned goalid)
 	unsigned s = nodemap[startid], t = nodemap[goalid];
 
 	static std::queue<unsigned> Q;
-	static double d[maxn];
-	static int v[maxn];
+	static std::map<unsigned,double> d;
+	static std::set<unsigned> v;
 
 	while(Q.size())Q.pop();
 	Q.push(s);
-	for(int i=0;i<maxn;i++) d[i] = 1e30;
-	memset(v,0,sizeof(v));
+	d.clear();
 	d[s] = 0;
+	v.insert(s);
 	Came_From.clear();
 	while(Q.size())
 	{
-		unsigned x = Q.front();Q.pop();v[x]=false;
+		unsigned x = Q.front();Q.pop();
+		v.erase(x);
 		for(int i = 0; i < G[x].size(); i++)
 		{
 			edge&e = E[G[x][i]];
-			if(d[e.to]>d[e.from]+e.dist)
+			if(d.find(e.to) == d.end() || d[e.to] > d[e.from] + e.dist)
 			{
 				d[e.to] = d[e.from] + e.dist;
 				Came_From[e.to] = e.from;
-				if(!v[e.to])
+				if(v.find(e.to) == v.end())
 				{
-					v[e.to]=true;
+					v.insert(e.to);
 					Q.push(e.to);
 				}
 			}
@@ -76,6 +77,26 @@ std::vector<unsigned> YWMap::SPFA(unsigned startid, unsigned goalid)
 	assert(d[t]<1e29);
 	return reconstruct_path(t);
 }
+
+/*std::vector<unsigned> YWMap::Dijkstra(unsigned startid, unsigned goalid)
+{
+	unsigned s = nodemap[startid], t = nodemap[goalid];
+
+	static std::priority_queue<std::pair<double,unsigned>, std::vector<std::pair<double,unsigned>>, std::greater<std::pair<double,unsigned>> >;
+	static std::map<double, unsigned> d;
+
+	while(Q.size())Q.pop();
+	d.clear();
+
+	d[s] = 0;
+	Q.push(std::make_pair(d[s], s));
+
+	while(Q.size())
+	{
+		unsigned
+	}
+
+}*/
 
 std::vector<unsigned> YWMap::AStarDist(unsigned startid, unsigned goalid) // index, index
 {
