@@ -22,18 +22,15 @@ SOURCES += main.cpp \
     load.cpp \
     ploymethods.cpp \
     plot.cpp \
-    shortestpath.cpp
+    shortestpath.cpp \
+    sa.cpp \
+    cmd.cpp
 
-INCLUDEPATH += /usr/local/include
+INCLUDEPATH += /usr/local/include/boost /usr/local/include/opencv2 /usr/local/include/
 
-LIBS += \
-        -L/usr/local/lib -lopencv_calib3d -lopencv_contrib -lopencv_core\
-         -lopencv_features2d -lopencv_flann -lopencv_gpu -lopencv_highgui\
-         -lopencv_imgproc -lopencv_legacy -lopencv_ml -lopencv_nonfree -lopencv_objdetect\
-         -lopencv_ocl -lopencv_photo -lopencv_stitching -lopencv_superres\
-         -lopencv_ts -lopencv_video -lopencv_videostab
+LIBS += -L/usr/local/lib -lopencv_core -lopencv_highgui -lopencv_imgproc
 
-LIBS += -lboost_system-mt -lboost_filesystem-mt
+LIBS += -lboost_system-mt #-lboost_filesystem-mt
 
 HEADERS += \
     ywmap.h \
@@ -41,3 +38,9 @@ HEADERS += \
     Libs/pugixml/pugixml.hpp
 
 QMAKE_MAC_SDK = macosx10.11
+
+QMAKE_CXXFLAGS += -O2
+
+QMAKE_CXXFLAGS += -Wno-unused-parameter
+QMAKE_CXXFLAGS += -Wno-unused-variable -Wno-unused-local-typedef
+

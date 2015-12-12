@@ -1,17 +1,17 @@
 #ifndef YWMAP_H
 #define YWMAP_H
-#define DEBUG
+//#define DEBUG
 //#define INFO
 #include <string>
 #include <vector>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <boost/geometry.hpp>
-#include <boost/geometry/geometries/point.hpp>
-#include <boost/geometry/index/rtree.hpp>
-#include <boost/geometry/geometries/box.hpp>
-#include "Libs/pugixml/pugixml.hpp"
+#include <core/core.hpp>
+#include <highgui/highgui.hpp>
+#include <imgproc/imgproc.hpp>
+#include <geometry.hpp>
+#include <geometry/geometries/point.hpp>
+#include <geometry/index/rtree.hpp>
+#include <geometry/geometries/box.hpp>
+#include <pugixml.hpp>
 
 #define maxn 600000
 namespace bg = boost::geometry;
@@ -26,10 +26,10 @@ struct node_struct
 	unsigned id;
 	point p;//lat,lon
 	pugi::xml_node node;
-	bool isway;
-	bool isbuilding;
+	bool isway,isbuilding,isline;
 	int fanout;
 	std::vector<pugi::xml_node> nd_in_way;
+	int level;
 	node_struct(unsigned id, point p, pugi::xml_node node, bool isway, bool isbuilding):
 		id(id),p(p),node(node),isway(isway),isbuilding(isbuilding)
 	{
@@ -81,17 +81,25 @@ class YWMap
 public:
 	void setDocosm(char* path);
 	void loadPlotConf();
-	void loadMap(); //load map node to rtree, way and relation to map(id -> xml_node)
-	cv::Mat Plot(point p, double l, double scale);
 	void loadSpeedConf();
+	void loadMap(); //load map node to rtree, way and relation to map(id -> xml_node)
+	cv::Mat Plot(point p, double l, double scale, double factor);
+	cv::Mat Plot(point p, int level, int div = 1);
 	std::vector<unsigned> AStarDist(unsigned s,unsigned t);
+	std::vector<unsigned> AStarTime(unsigned s,unsigned t);
 	std::vector<unsigned> SPFA(unsigned s,unsigned t);
-	void PlotShortestPath(cv::Mat &ret, std::vector<unsigned> total_path, cv::Scalar color=cv::Scalar(0xfa,0x9e,0x25));
+	std::vector<unsigned> SPFATime(unsigned s,unsigned t);
+	cv::Mat PlotShortestPath(std::vector<unsigned> total_path, cv::Scalar color=cv::Scalar(0x00,0x00,0xFF));
+	//void PlotShortestPath(cv::Mat &ret, std::vector<unsigned> total_path, point p, int level, cv::Scalar color=cv::Scalar(0xfa,0x9e,0x25));
+	std::vector<std::pair<std::string,point>> queryName(char *P);
+	////////////////////////ui////////////////////////
+	static void cmd_showmap();
+	static void cmd_shortestpath();
 private:
 	//bool sortLayerCmp(std::pair<int,std::pair<box, unsigned>> a,std::pair<int,std::pair<box, unsigned>> b);
 	pugi::xml_document doc_osm,doc_plot_conf,doc_speed_conf;
-	double scalex,scaley,l;
-	point p;
+	//double scalex,scaley,l;
+	//point p;
 
 	std::vector<node_struct> nodevec;
 	std::map<unsigned, unsigned> nodemap; // id -> index
@@ -108,17 +116,17 @@ private:
 	bgi::rtree< std::pair<point,unsigned> , bgi::quadratic<16> > way_node_tree;  // point -> index of nodevec
 	bgi::rtree< std::pair<box,unsigned> , bgi::quadratic<16> > build_tree;  // box -> index of buildvec
 
-	void PlotWay(cv::Mat& ret,point p, double l, double scale);
-	void PlotContour(cv::Mat& ret, point p, double l, double scale);
+	void PlotWay(cv::Mat& ret, point p, double l, double scalex, double scaley, double factor);
+	void PlotContour(cv::Mat& ret, point p, double l, double scalex, double scaley, double factor);
 
 	cv::Scalar hex2BGR(std::string hex);
 	cv::Point2d p2P(point v, point p, double scalex, double scaley);
 
-	void plotLineBound(cv::Mat &ret,pugi::xml_node nd, point p, double l);
-	void plotLineFill(cv::Mat &ret,pugi::xml_node nd, point p, double l);
-	void plotline(cv::Mat &m, point start, point end, point p, double l,
+	void plotLineBound(cv::Mat &ret, pugi::xml_node nd, point p, double l, double scalex, double scaley, double factor);
+	void plotLineFill(cv::Mat &ret, pugi::xml_node nd, point p, double l, double scalex, double scaley, double factor);
+	void plotline(cv::Mat &m, point start, point end, point p, double l, double scalex, double scaley,
 				  cv::Scalar color, int thickness, int lineType=CV_AA);
-	void plotPoly(cv::Mat &img, pugi::xml_node way, point p, cv::Scalar color, cv::Scalar ccolor, int boundthick);
+	void plotPoly(cv::Mat &img, pugi::xml_node way, point p, double scalex, double scaley, cv::Scalar color, cv::Scalar ccolor, int boundthick);
 
 	/*void plotPolyLayer(cv::Mat &img, pugi::xml_node way, point p, double scale);
 	void plotPolyElement(cv::Mat &img, pugi::xml_node way, point p, double scale);
@@ -135,6 +143,13 @@ private:
 	void addEdge(unsigned indexfrom, unsigned indexto, double speed, double slowspeed, bool oneway);
 	std::map<unsigned,unsigned> Came_From;
 	std::vector<unsigned> reconstruct_path(unsigned current);
+	//////////////////////后缀数组相关////////////////////////
+	std::vector<std::pair<std::string, point>> nameList;
+	int SA_n;
+	char s[500000];
+	int index[500000], sa[500000];
+	void build_sa();
+	int cmp_suffix(char *pattern, int p, int m);
 };
 
 #endif // YWMAP_H

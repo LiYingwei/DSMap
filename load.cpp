@@ -31,6 +31,9 @@ void YWMap::loadMap()
 #endif
 		nodevec.push_back(node_struct(id,p,obj, false, false));
 		nodemap[id] = nodevec.size() - 1;
+		for(pugi::xml_node tag = obj.child("tag"); tag; tag = tag.next_sibling())
+			if(tag.attribute("k").as_string() == "name")
+				nameList.push_back(std::make_pair(tag.attribute("v").as_string(), p));
 	}
 #ifdef INFO
 	printf("Node added!\n");
@@ -53,6 +56,9 @@ void YWMap::loadMap()
 			if(tag.attribute("k").as_string() == std::string("bridge") ) bridge = true;
 			if(tag.attribute("k").as_string() == std::string("oneway") && tag.attribute("v").as_string() == std::string("yes"))
 				oneway = true;
+			if(tag.attribute("k").as_string() == std::string("name") )
+				nameList.push_back(std::make_pair(tag.attribute("v").as_string(),
+												  nodevec[nodemap[obj.child("nd").attribute("ref").as_uint()]].p));
 		}
 
 		auto it = elementmap.find(make_pair(type,subtype));
@@ -126,6 +132,30 @@ void YWMap::loadMap()
 				if(nd != tag)addEdge(nodemap[nd.attribute("ref").as_uint()], nodemap[nd.next_sibling().attribute("ref").as_uint()],speed, slowspeed, oneway);
 			}
 		}
+		else if(elementvec[it->second]["method"] == std::string("line"))
+		{
+			auto &elem = elementvec[elementmap[make_pair(type,subtype)]];
+			cv::Scalar color = hex2BGR(elem["color"]), ccolor = color;
+			int thickness, boundthick=0;
+			sscanf(elem["thickness"].c_str(), "%d", &thickness);
+			wayvec.push_back(way_struct(id,-10,type,color,ccolor,thickness,boundthick,0,0,0));
+			waymap[id] = wayvec.size() - 1;
+			pugi::xml_node nd;
+			for(nd = tag; nd; nd = nd.previous_sibling())
+			{
+				unsigned ref = nd.attribute("ref").as_uint(-1);
+#ifdef DEBUG
+				assert(ref != -1);
+#endif
+				unsigned index = nodemap[ref];
+				nodevec[index].isway = true;
+				nodevec[index].nd_in_way.push_back(nd);
+				//if(nd == tag || nd == nd.parent().first_child()) nodevec[index].fanout++;
+				//else nodevec[index].fanout += 2;
+
+				//if(nd != tag)addEdge(nodemap[nd.attribute("ref").as_uint()], nodemap[nd.next_sibling().attribute("ref").as_uint()],speed, slowspeed, oneway);
+			}
+		}
 	}
 #ifdef INFO
 	printf("Way added!\n");
@@ -155,6 +185,14 @@ void YWMap::loadMap()
 #ifdef DEBUG
 	printf("Edge num : %d\nNode num : %d\nNode(fanout = 2) num : %d\n", E.size(), nodenum, importantnodenum);
 #endif
+////////////////////后缀数组相关//////////////////
+	/*int size=0;
+	for(int i=0;i<nameList.size(); i++) size += nameList[i].first.size();
+	std::cout << nameList.size() << std::endl;
+		//std::cout << nameList[i].first << std::endl;*/
+	build_sa();
+
+
 }
 
 void YWMap::loadPlotConf()
