@@ -163,6 +163,81 @@ void YWMap::PlotWay(cv::Mat &ret, point p, double l, double scalex, double scale
 
 }
 
+cv::Mat YWMap::PlotPointNearest(point po, std::vector<std::pair<point,unsigned>> nodes, cv::Scalar color)
+{
+	assert(nodes.size() != 0);
+	double minlat = nodes[0].first.get<0>(),
+			minlon = nodes[0].first.get<1>(),
+			maxlat = nodes[0].first.get<0>(),
+			maxlon = nodes[0].first.get<1>();
+	for(int i = 1; i < nodes.size(); i++)
+	{
+		minlat = fmin(minlat, nodes[i].first.get<0>());
+		maxlat = fmax(maxlat, nodes[i].first.get<0>());
+		minlon = fmin(minlon, nodes[i].first.get<1>());
+		maxlon = fmax(maxlon, nodes[i].first.get<1>());
+	}
+	double l = fmax(maxlat - minlat, maxlon - minlon) * 1.3;
+	int level=18;
+	if(l>0.005)level = 17;
+	if(l>0.01) level = 16;
+	if(l>0.02) level = 15;
+	if(l>0.04) level = 14;
+	if(l>0.08) level = 13;
+	if(l>0.16) level = 12;
+	if(l>0.32) level = 11;
+	point P = point((maxlat + minlat)/2, (maxlon + minlon)/2);
+	//printf("%f %f===level = %d \n",(maxlat + minlat)/2, (maxlon + minlon)/2, level);
+	cv::Mat ret = Plot(P,level);
+	l = 1310.72 * pow(2.0 ,-level);
+	point p(P.get<0>()+l/2,P.get<1>()-l/2);
+	double scale = 2560/l;
+	double scalex = scale;
+	double scaley = scale * cos(p.get<0>());
+
+	cv::circle(ret, p2P(po, p, scalex, scaley), 6, color, 3, CV_AA);
+	for(auto node: nodes)
+	{
+		cv::circle(ret, p2P(node.first, p, scalex, scaley), 1, color, 3, CV_AA);
+	}
+	return ret;
+}
+
+cv::Mat YWMap::PlotPointInBox(box b, std::vector<std::pair<point, unsigned> > nodes, cv::Scalar color)
+{
+	double minlat = b.min_corner().get<0>(),
+			minlon = b.min_corner().get<1>(),
+			maxlat = b.max_corner().get<0>(),
+			maxlon = b.max_corner().get<1>();
+	double l = fmax(maxlat - minlat, maxlon - minlon) * 1.3;
+	int level=18;
+	if(l>0.005)level = 17;
+	if(l>0.01) level = 16;
+	if(l>0.02) level = 15;
+	if(l>0.04) level = 14;
+	if(l>0.08) level = 13;
+	if(l>0.16) level = 12;
+	if(l>0.32) level = 11;
+	point P = point((maxlat + minlat)/2, (maxlon + minlon)/2);
+	cv::Mat ret = Plot(P,level);
+	l = 1310.72 * pow(2.0 ,-level);
+	point p(P.get<0>()+l/2,P.get<1>()-l/2);
+	double scale = 2560/l;
+	double scalex = scale;
+	double scaley = scale * cos(p.get<0>());
+
+	plotline(ret, point(minlat,minlon), point(minlat, maxlon), p, l, scalex, scaley , color, 3, CV_AA);
+	plotline(ret, point(maxlat,minlon), point(maxlat, maxlon), p, l, scalex, scaley , color, 3, CV_AA);
+	plotline(ret, point(maxlat,minlon), point(minlat, minlon), p, l, scalex, scaley , color, 3, CV_AA);
+	plotline(ret, point(maxlat,maxlon), point(minlat, maxlon), p, l, scalex, scaley , color, 3, CV_AA);
+
+	for(auto node: nodes)
+	{
+		cv::circle(ret, p2P(node.first, p, scalex, scaley), 1, color, 3, CV_AA);
+	}
+	return ret;
+}
+
 cv::Mat YWMap::PlotShortestPath(std::vector<unsigned> total_path, cv::Scalar color)
 {
 	assert(total_path.size() != 0);

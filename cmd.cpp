@@ -49,3 +49,30 @@ void YWMap::cmd_shortestpath()
 	cv::Mat path = map.PlotShortestPath(map.AStarTime(id1,id2,slowset));
 	cv::imwrite("shortestpath.png", path);
 }
+
+void YWMap::cmd_querybox()
+{
+	double minlat,maxlat,minlon,maxlon;
+	scanf("%lf%lf%lf%lf", &maxlat, &minlon, &minlat, &maxlon);
+	box b(point(minlat,minlon), point(maxlat,maxlon));
+	clock_t t = clock();
+	std::vector<std::pair<point,unsigned>> result = map.querybox(b);
+	t = clock() - t;
+	printf("[RTree query box]It takes %fms\n", (float)t / CLOCKS_PER_SEC * 1000);
+	cv::Mat node = map.PlotPointInBox(b, result, cv::Scalar(0x24, 0xA7, 0x6D));
+	cv::imwrite("querybox.png", node);
+}
+
+void YWMap::cmd_querynearest()
+{
+	double lat,lon;
+	int k;
+	scanf("%lf%lf%d", &lat, &lon, &k);
+	point p(lat,lon);
+	clock_t t = clock();
+	std::vector<std::pair<point,unsigned>> result = map.nearestForPlot(p,k);
+	t = clock() - t;
+	printf("[RTree query nearest]It takes %fms\n", (float)t / CLOCKS_PER_SEC * 1000);
+	cv::Mat nearest = map.PlotPointNearest(p, result, cv::Scalar(0x24, 0xA7, 0x6D));
+	cv::imwrite("nearest.png", nearest);
+}

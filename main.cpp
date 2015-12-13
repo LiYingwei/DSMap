@@ -53,8 +53,8 @@ int main(int argc, char *argv[])
 		//else if(strcmp(buf, "help") == 0) cmd_help();
 		else if(strcmp(buf, "showmap") == 0) YWMap::cmd_showmap(); //showmap 31.30186 121.51159 13
 		else if(strcmp(buf, "shortestpath") == 0) YWMap::cmd_shortestpath(); //shortestpath 1008057714 1813887498 2 227962891 11635095
-		//else if(strcmp(buf, "querynode") == 0) cmd_querynode();
-		//else if(strcmp(buf, "queryway") == 0) cmd_queryway();
+		else if(strcmp(buf, "querynode") == 0) YWMap::cmd_querybox(); //querynode 31.2449 121.4886 31.2349 121.5073
+		else if(strcmp(buf, "querynearest") == 0) YWMap::cmd_querynearest(); //querynearest 31.2392 121.4956 100
 		//else if(strcmp(buf, ""))
 		printf(">> ");
 		fflush(stdout);

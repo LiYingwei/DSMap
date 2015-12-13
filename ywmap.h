@@ -91,15 +91,22 @@ public:
 	std::vector<unsigned> SPFA(unsigned s, unsigned t);
 	std::vector<unsigned> SPFATime(unsigned s, unsigned t, std::set<unsigned> slowset);
 	cv::Mat PlotShortestPath(std::vector<unsigned> total_path, cv::Scalar color=cv::Scalar(0x00,0x00,0xFF));
+	cv::Mat PlotPointInBox(box b, std::vector<std::pair<point,unsigned>> nodes, cv::Scalar color = cv::Scalar(0xFF, 0xCC, 0xCC));
+	cv::Mat PlotPointNearest(point po, std::vector<std::pair<point,unsigned>> nodes, cv::Scalar color = cv::Scalar(0xFF, 0xCC, 0xCC));
 	//void PlotShortestPath(cv::Mat &ret, std::vector<unsigned> total_path, point p, int level, cv::Scalar color=cv::Scalar(0xfa,0x9e,0x25));
-	std::vector<std::pair<std::string,point>> queryName(char *P);
-	std::vector<unsigned> nearest(point p, int k = 1);
 	////////////////////////ui////////////////////////
 	static void cmd_showmap();
 	static void cmd_shortestpath();
+	static void cmd_querybox();
+	static void cmd_querynearest();
 	//////////////visit private element///////////////
 	unsigned getNodeIndexById(unsigned id);
 	unsigned getNodeIdByIndex(unsigned index);
+	//////////////////////query///////////////////////
+	std::vector<std::pair<point,unsigned>> querybox(box b);
+	std::vector<std::pair<std::string,point>> queryName(char *P);
+	std::vector<unsigned> nearest(point p, int k = 1);
+	std::vector<std::pair<point, unsigned>> nearestForPlot(point p, int k = 1);
 private:
 	//bool sortLayerCmp(std::pair<int,std::pair<box, unsigned>> a,std::pair<int,std::pair<box, unsigned>> b);
 	pugi::xml_document doc_osm,doc_plot_conf,doc_speed_conf;
