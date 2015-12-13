@@ -24,7 +24,9 @@ SOURCES += main.cpp \
     plot.cpp \
     shortestpath.cpp \
     sa.cpp \
-    cmd.cpp
+    cmd.cpp \
+    nearest.cpp \
+    visitprivateelement.cpp
 
 INCLUDEPATH += /usr/local/include/boost /usr/local/include/opencv2 /usr/local/include/
 

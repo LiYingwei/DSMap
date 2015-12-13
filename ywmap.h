@@ -72,8 +72,9 @@ struct building_struct
 struct edge
 {
 	unsigned from, to;
-	double dist, time;
-	edge(unsigned from,unsigned to, double dist, double time):from(from),to(to),dist(dist),time(time){}
+	double dist, time, slowtime;
+	unsigned wayid;
+	edge(unsigned from,unsigned to, double dist, double time, double slowtime, unsigned wayid):from(from),to(to),dist(dist),time(time),slowtime(slowtime),wayid(wayid){}
 };
 
 class YWMap
@@ -87,14 +88,18 @@ public:
 	cv::Mat Plot(point p, int level, int div = 1);
 	std::vector<unsigned> AStarDist(unsigned s,unsigned t);
 	std::vector<unsigned> AStarTime(unsigned s,unsigned t);
-	std::vector<unsigned> SPFA(unsigned s,unsigned t);
-	std::vector<unsigned> SPFATime(unsigned s,unsigned t);
+	std::vector<unsigned> SPFA(unsigned s, unsigned t);
+	std::vector<unsigned> SPFATime(unsigned s, unsigned t, std::set<unsigned> slowset);
 	cv::Mat PlotShortestPath(std::vector<unsigned> total_path, cv::Scalar color=cv::Scalar(0x00,0x00,0xFF));
 	//void PlotShortestPath(cv::Mat &ret, std::vector<unsigned> total_path, point p, int level, cv::Scalar color=cv::Scalar(0xfa,0x9e,0x25));
 	std::vector<std::pair<std::string,point>> queryName(char *P);
+	std::vector<unsigned> nearest(point p, int k = 1);
 	////////////////////////ui////////////////////////
 	static void cmd_showmap();
 	static void cmd_shortestpath();
+	//////////////visit private element///////////////
+	unsigned getNodeIndexById(unsigned id);
+	unsigned getNodeIdByIndex(unsigned index);
 private:
 	//bool sortLayerCmp(std::pair<int,std::pair<box, unsigned>> a,std::pair<int,std::pair<box, unsigned>> b);
 	pugi::xml_document doc_osm,doc_plot_conf,doc_speed_conf;
@@ -114,9 +119,11 @@ private:
 	std::vector<std::map<std::string,std::string>> elementvec;
 
 	bgi::rtree< std::pair<point,unsigned> , bgi::quadratic<16> > way_node_tree;  // point -> index of nodevec
+	bgi::rtree< std::pair<point,unsigned> , bgi::quadratic<16> > water_line_tree;
 	bgi::rtree< std::pair<box,unsigned> , bgi::quadratic<16> > build_tree;  // box -> index of buildvec
 
 	void PlotWay(cv::Mat& ret, point p, double l, double scalex, double scaley, double factor);
+	void PlotWaterWay(cv::Mat& ret, point p, double l, double scalex, double scaley, double factor);
 	void PlotContour(cv::Mat& ret, point p, double l, double scalex, double scaley, double factor);
 
 	cv::Scalar hex2BGR(std::string hex);
@@ -140,7 +147,7 @@ private:
 	std::vector<unsigned> G[maxn];
 	std::vector<edge>E;
 	double nodeDist(point p1, point p2);
-	void addEdge(unsigned indexfrom, unsigned indexto, double speed, double slowspeed, bool oneway);
+	void addEdge(unsigned indexfrom, unsigned indexto, double speed, double slowspeed, bool oneway, unsigned wayid);
 	std::map<unsigned,unsigned> Came_From;
 	std::vector<unsigned> reconstruct_path(unsigned current);
 	//////////////////////后缀数组相关////////////////////////

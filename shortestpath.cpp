@@ -8,18 +8,19 @@ double YWMap::nodeDist(point p1, point p2)
 #undef sqr
 }
 
-void YWMap::addEdge(unsigned indexfrom, unsigned indexto, double speed, double slowspeed, bool oneway)
+void YWMap::addEdge(unsigned indexfrom, unsigned indexto, double speed, double slowspeed, bool oneway, unsigned wayid)
 {
-	assert(slowspeed || true); //slow speed is not used now.
+	//assert(slowspeed || true); //slow speed is not used now.
 	node_struct from = nodevec[indexfrom], to = nodevec[indexto];
 	double dist = nodeDist(from.p, to.p);
 	double time = dist / speed;
+	double slowtime = dist / slowspeed;
 	//printf("speed = %f, time = %f\n", speed, time);
-	E.push_back(edge(indexfrom,indexto,dist,time));
+	E.push_back(edge(indexfrom,indexto,dist,time,slowtime,wayid));
 	G[indexfrom].push_back(E.size() - 1);
 	if(!oneway)
 	{
-		E.push_back(edge(indexto, indexfrom, dist, time));
+		E.push_back(edge(indexto, indexfrom, dist, time, slowtime,wayid));
 		G[indexto].push_back(E.size() - 1);
 	}
 }
@@ -78,11 +79,11 @@ std::vector<unsigned> YWMap::SPFA(unsigned startid, unsigned goalid)
 	printf("[SPFA]The dist is %fkm\n", d[t]);
 	//assert(d[t]<1e29);
 	Time = Time - clock();
-	printf("[SPFA]%fms used\n", (float)t/CLOCKS_PER_SEC);
+	printf("[SPFA]%fms used\n", (float)t/CLOCKS_PER_SEC * 1000);
 	return reconstruct_path(t);
 }
 
-std::vector<unsigned> YWMap::SPFATime(unsigned startid, unsigned goalid)
+std::vector<unsigned> YWMap::SPFATime(unsigned startid, unsigned goalid, std::set<unsigned> slowset = std::set<unsigned>())
 {
 	clock_t Time = clock();
 	unsigned s = nodemap[startid], t = nodemap[goalid];
@@ -103,9 +104,10 @@ std::vector<unsigned> YWMap::SPFATime(unsigned startid, unsigned goalid)
 		for(int i = 0; i < G[x].size(); i++)
 		{
 			edge&e = E[G[x][i]];
-			if(d[e.to]>d[e.from]+e.time)
+			double time = (slowset.find(e.wayid)==slowset.end())?e.time:e.slowtime;
+			if(d[e.to]>d[e.from]+time)
 			{
-				d[e.to] = d[e.from] + e.time;
+				d[e.to] = d[e.from] + time;
 				Came_From[e.to] = e.from;
 				if(!v[e.to])
 				{
@@ -118,7 +120,7 @@ std::vector<unsigned> YWMap::SPFATime(unsigned startid, unsigned goalid)
 	printf("[SPFA]It takes %f minutes\n", d[t] * 60);
 	//assert(d[t]<1e29);
 	Time = Time - clock();
-	printf("[SPFA]%fms used\n", (float)t/CLOCKS_PER_SEC);
+	printf("[SPFA]%fms used\n", (float)t/CLOCKS_PER_SEC * 1000);
 	return reconstruct_path(t);
 }
 
@@ -152,7 +154,7 @@ std::vector<unsigned> YWMap::AStarDist(unsigned startid, unsigned goalid) // ind
 		{
 			printf("[AStar]The dist is %fkm\n", g_score[t]);
 			Time = Time - clock();
-			printf("[AStar]%fms used\n", (float)t/CLOCKS_PER_SEC);
+			printf("[AStar]%fms used\n", (float)t/CLOCKS_PER_SEC * 1000);
 			return reconstruct_path(t);
 		}
 
@@ -171,7 +173,7 @@ std::vector<unsigned> YWMap::AStarDist(unsigned startid, unsigned goalid) // ind
 			OpenSet.push(std::make_pair(f_score[e.to], e.to));
 		}
 	}
-	assert(0);
+	printf("[AStar] No way found!\n");
 }
 
 
@@ -204,7 +206,7 @@ std::vector<unsigned> YWMap::AStarTime(unsigned startid, unsigned goalid) // ind
 		{
 			printf("[AStar]It takes %f minutes\n", g_score[t] * 60);
 			Time = Time - clock();
-			printf("[AStar]%fms used\n", (float)t/CLOCKS_PER_SEC);
+			printf("[AStar]%fms used\n", (float)t/CLOCKS_PER_SEC * 1000);
 			return reconstruct_path(t);
 		}
 
@@ -223,5 +225,5 @@ std::vector<unsigned> YWMap::AStarTime(unsigned startid, unsigned goalid) // ind
 			OpenSet.push(std::make_pair(f_score[e.to], e.to));
 		}
 	}
-	assert(0);
+	printf("[AStar] No way found!\n");
 }

@@ -51,8 +51,8 @@ int main(int argc, char *argv[])
 	{
 		if(strcmp(buf,"quit") == 0)break;
 		//else if(strcmp(buf, "help") == 0) cmd_help();
-		else if(strcmp(buf, "showmap") == 0) YWMap::cmd_showmap();
-		else if(strcmp(buf, "shortestpath") == 0) YWMap::cmd_shortestpath(); //shortestpath 1008057714 1813887498
+		else if(strcmp(buf, "showmap") == 0) YWMap::cmd_showmap(); //showmap 31.30186 121.51159 13
+		else if(strcmp(buf, "shortestpath") == 0) YWMap::cmd_shortestpath(); //shortestpath 1008057714 1813887498 2 227962891 11635095
 		//else if(strcmp(buf, "querynode") == 0) cmd_querynode();
 		//else if(strcmp(buf, "queryway") == 0) cmd_queryway();
 		//else if(strcmp(buf, ""))

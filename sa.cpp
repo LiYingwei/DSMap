@@ -52,6 +52,7 @@ int YWMap::cmp_suffix(char *pattern, int p, int m)
 
 std::vector<std::pair<std::string,point>> YWMap::queryName(char *P)
 {
+	clock_t t = clock();
 	std::vector<std::pair<std::string,point>> ret;
 	ret.clear();
 	int m = strlen(P);
@@ -74,5 +75,7 @@ std::vector<std::pair<std::string,point>> YWMap::queryName(char *P)
 		//std::cout << nameList[index[sa[L]]].first << std::endl;
 		L++;
 	}
+	t = clock() - t;
+	printf("[Suffix Array]%fms used\n", (float)t/CLOCKS_PER_SEC * 1000);
 	return ret;
 }

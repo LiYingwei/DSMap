@@ -129,7 +129,7 @@ void YWMap::loadMap()
 				if(nd == tag || nd == nd.parent().first_child()) nodevec[index].fanout++;
 				else nodevec[index].fanout += 2;
 
-				if(nd != tag)addEdge(nodemap[nd.attribute("ref").as_uint()], nodemap[nd.next_sibling().attribute("ref").as_uint()],speed, slowspeed, oneway);
+				if(nd != tag)addEdge(nodemap[nd.attribute("ref").as_uint()], nodemap[nd.next_sibling().attribute("ref").as_uint()],speed, slowspeed, oneway, id);
 			}
 		}
 		else if(elementvec[it->second]["method"] == std::string("line"))
@@ -148,7 +148,7 @@ void YWMap::loadMap()
 				assert(ref != -1);
 #endif
 				unsigned index = nodemap[ref];
-				nodevec[index].isway = true;
+				nodevec[index].isline = true;
 				nodevec[index].nd_in_way.push_back(nd);
 				//if(nd == tag || nd == nd.parent().first_child()) nodevec[index].fanout++;
 				//else nodevec[index].fanout += 2;
@@ -160,7 +160,7 @@ void YWMap::loadMap()
 #ifdef INFO
 	printf("Way added!\n");
 #endif
-////////////////把节点信息加入R树以及取出重要点///////////////////
+////////////////把节点信息加入R树///////////////////
 #ifdef DEBUG
 	int nodenum = 0, importantnodenum = 0;
 #endif
@@ -175,7 +175,12 @@ void YWMap::loadMap()
 		//printf("node No.%u in a way\n",node.id);
 #endif
 		way_node_tree.insert(std::make_pair(node.p,i));
-	};
+	}
+	else if(nodevec[i].isline)
+	{
+		node_struct & node = nodevec[i];
+		water_line_tree.insert(std::make_pair(node.p,i));
+	}
 /////////////////////把建筑信息加入R树////////////////////////
 	for(int i=0;i<buildvec.size(); i++)
 	{
