@@ -177,7 +177,7 @@ std::vector<unsigned> YWMap::AStarDist(unsigned startid, unsigned goalid) // ind
 }
 
 
-std::vector<unsigned> YWMap::AStarTime(unsigned startid, unsigned goalid) // index, index
+std::vector<unsigned> YWMap::AStarTime(unsigned startid, unsigned goalid, std::set<unsigned> slowset = std::set<unsigned>()) // index, index
 {
 	clock_t Time = clock();
 	unsigned s = nodemap[startid], t = nodemap[goalid];
@@ -216,7 +216,8 @@ std::vector<unsigned> YWMap::AStarTime(unsigned startid, unsigned goalid) // ind
 		{
 			edge& e = E[index];
 			if (ClosedSet.find(e.to)!=ClosedSet.end()) continue;
-			double tentative_g_score = g_score[current] + e.time;
+			double time = (slowset.find(e.wayid) == slowset.end())? e.time : e.slowtime;
+			double tentative_g_score = g_score[current] + time;
 			if(inOpenSet.find(e.to) != inOpenSet.end() && tentative_g_score >= g_score[e.to]) continue;
 			Came_From[e.to] = current;
 			g_score[e.to] = tentative_g_score;

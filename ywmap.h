@@ -87,7 +87,7 @@ public:
 	cv::Mat Plot(point p, double l, double scale, double factor);
 	cv::Mat Plot(point p, int level, int div = 1);
 	std::vector<unsigned> AStarDist(unsigned s,unsigned t);
-	std::vector<unsigned> AStarTime(unsigned s,unsigned t);
+	std::vector<unsigned> AStarTime(unsigned s,unsigned t, std::set<unsigned> slowset);
 	std::vector<unsigned> SPFA(unsigned s, unsigned t);
 	std::vector<unsigned> SPFATime(unsigned s, unsigned t, std::set<unsigned> slowset);
 	cv::Mat PlotShortestPath(std::vector<unsigned> total_path, cv::Scalar color=cv::Scalar(0x00,0x00,0xFF));
