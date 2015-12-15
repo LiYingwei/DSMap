@@ -90,6 +90,8 @@ public:
 	std::vector<unsigned> AStarTime(unsigned s,unsigned t, std::set<unsigned> slowset);
 	std::vector<unsigned> SPFA(unsigned s, unsigned t);
 	std::vector<unsigned> SPFATime(unsigned s, unsigned t, std::set<unsigned> slowset);
+	std::vector<unsigned> dijkstraDist(unsigned s, unsigned t);
+	std::vector<unsigned> dijkstraTime(unsigned s, unsigned t, std::set<unsigned> slowset);
 	cv::Mat PlotShortestPath(std::vector<unsigned> total_path, cv::Scalar color=cv::Scalar(0x00,0x00,0xFF));
 	cv::Mat PlotPointInBox(box b, std::vector<std::pair<point,unsigned>> nodes, cv::Scalar color = cv::Scalar(0xFF, 0xCC, 0xCC));
 	cv::Mat PlotPointNearest(point po, std::vector<std::pair<point,unsigned>> nodes, cv::Scalar color = cv::Scalar(0xFF, 0xCC, 0xCC));

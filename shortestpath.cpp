@@ -78,8 +78,8 @@ std::vector<unsigned> YWMap::SPFA(unsigned startid, unsigned goalid)
 	}
 	printf("[SPFA]The dist is %fkm\n", d[t]);
 	//assert(d[t]<1e29);
-	Time = Time - clock();
-	printf("[SPFA]%fms used\n", (float)t/CLOCKS_PER_SEC * 1000);
+	Time = clock() - Time;
+	printf("[SPFA]%fms used\n", (float)Time/CLOCKS_PER_SEC * 1000);
 	return reconstruct_path(t);
 }
 
@@ -119,8 +119,8 @@ std::vector<unsigned> YWMap::SPFATime(unsigned startid, unsigned goalid, std::se
 	}
 	printf("[SPFA]It takes %f minutes\n", d[t] * 60);
 	//assert(d[t]<1e29);
-	Time = Time - clock();
-	printf("[SPFA]%fms used\n", (float)t/CLOCKS_PER_SEC * 1000);
+	Time = clock() - Time;
+	printf("[SPFA]%fms used\n", (float)Time/CLOCKS_PER_SEC * 1000);
 	return reconstruct_path(t);
 }
 
@@ -153,8 +153,8 @@ std::vector<unsigned> YWMap::AStarDist(unsigned startid, unsigned goalid) // ind
 		if(current == t)
 		{
 			printf("[AStar]The dist is %fkm\n", g_score[t]);
-			Time = Time - clock();
-			printf("[AStar]%fms used\n", (float)t/CLOCKS_PER_SEC * 1000);
+			Time = clock() - Time;
+			printf("[AStar]%fms used\n", (float)Time/CLOCKS_PER_SEC * 1000);
 			return reconstruct_path(t);
 		}
 
@@ -205,8 +205,8 @@ std::vector<unsigned> YWMap::AStarTime(unsigned startid, unsigned goalid, std::s
 		if(current == t)
 		{
 			printf("[AStar]It takes %f minutes\n", g_score[t] * 60);
-			Time = Time - clock();
-			printf("[AStar]%fms used\n", (float)t/CLOCKS_PER_SEC * 1000);
+			Time = clock() - Time;
+			printf("[AStar]%fms used\n", (float)Time/CLOCKS_PER_SEC * 1000);
 			return reconstruct_path(t);
 		}
 
@@ -227,4 +227,88 @@ std::vector<unsigned> YWMap::AStarTime(unsigned startid, unsigned goalid, std::s
 		}
 	}
 	printf("[AStar] No way found!\n");
+}
+
+std::vector<unsigned> YWMap::dijkstraDist(unsigned startid, unsigned goalid)
+{
+	clock_t Time = clock();
+	unsigned s = nodemap[startid], t = nodemap[goalid];
+	static std::priority_queue<std::pair<double,unsigned>,std::vector<std::pair<double,unsigned> >, std::greater<std::pair<double,unsigned> > >Q;
+	static double d[maxn];
+	static bool done[maxn];
+
+	while(Q.size())Q.pop();
+	memset(d,63,sizeof(d));
+	memset(done,0,sizeof(done));
+
+	Q.push(std::make_pair(0,s));
+	d[s] = 0;
+	while(Q.size())
+	{
+		unsigned x = Q.top().second;
+		Q.pop();
+		if(done[x])continue;
+		done[x] = true;
+		for(unsigned index:G[x])
+		{
+			edge&e=E[index];
+			if(d[e.to] > d[x] + e.dist)
+			{
+				d[e.to] = d[x] + e.dist;
+				Came_From[e.to] = x;
+				Q.push(std::make_pair(d[e.to],e.to));
+				if(e.to == t)
+				{
+					printf("[Dijkstra]The dist is %fkm\n", d[t]);
+					Time = clock() - Time;
+					printf("[Dijkstra]%fms used\n", (float)Time/CLOCKS_PER_SEC * 1000);
+					return reconstruct_path(t);
+				}
+			}
+		}
+	}
+	printf("[Dijkstra] No way found!\n");
+}
+
+std::vector<unsigned> YWMap::dijkstraTime(unsigned startid, unsigned goalid, std::set<unsigned> slowset = std::set<unsigned>())
+{
+	clock_t Time = clock();
+	unsigned s = nodemap[startid], t = nodemap[goalid];
+	static std::priority_queue<std::pair<double,unsigned>,std::vector<std::pair<double,unsigned> >, std::greater<std::pair<double,unsigned> > >Q;
+	static double d[maxn];
+	static bool done[maxn];
+
+	while(Q.size())Q.pop();
+	for(int i=0;i<maxn;i++) d[i] = 1e30;
+	memset(done,0,sizeof(done));
+	Came_From.clear();
+
+	Q.push(std::make_pair(0,s));
+	d[s] = 0;
+	while(Q.size())
+	{
+		unsigned x = Q.top().second;
+		Q.pop();
+		if(done[x])continue;
+		done[x] = true;
+		for(unsigned index:G[x])
+		{
+			edge&e=E[index];
+			double time = (slowset.find(e.wayid) == slowset.end())? e.time : e.slowtime;
+			if(d[e.to] > d[e.from] + time)
+			{
+				d[e.to] = d[e.from] + time;
+				Came_From[e.to] = e.from;
+				Q.push(std::make_pair(d[e.to],e.to));
+				if(e.to == t)
+				{
+					printf("[Dijkstra]It takes %f minutes\n", d[t] * 60);
+					Time = clock() - Time;
+					printf("[Dijkstra]%fms used\n", (float)Time/CLOCKS_PER_SEC * 1000);
+					return reconstruct_path(t);
+				}
+			}
+		}
+	}
+	printf("[Dijkstra] No way found!\n");
 }

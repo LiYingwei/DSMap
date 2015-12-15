@@ -46,7 +46,11 @@ void YWMap::cmd_shortestpath()
 		slowset.insert(id);
 	}
 	//if(map.nodemap.find(id1) == map.nodemap.end()) id1 = map.queryName(s1)
+	cv::Mat pathspfa = map.PlotShortestPath(map.SPFATime(id1,id2,slowset));
+	cv::Mat pathdijk = map.PlotShortestPath(map.dijkstraTime(id1,id2,slowset));
 	cv::Mat path = map.PlotShortestPath(map.AStarTime(id1,id2,slowset));
+	cv::imwrite("shortestpathSPFA.png", pathspfa);
+	cv::imwrite("shortestpathDijk.png", pathdijk);
 	cv::imwrite("shortestpath.png", path);
 }
 

@@ -144,14 +144,22 @@ void query(double minlat,double maxlat,double minlon,double maxlon,const segment
 {
 	if(minlon <= rt.minlon && rt.maxlon <= maxlon)
 	{
+		//printf("%f %f\n",rt.minlon, rt.maxlon);
 		for(int i=Lpt;i<=min((int)rt.p.size()-1,Rpt);i++)
 		{
 			if(rt.p[i].first <= maxlat && rt.p[i].first >= minlat) ansvec.push_back(rt.p[i].second);
 		}
 		return;
 	}
-	if(minlon <= rt.lch->maxlon)query(minlat,maxlat,minlon,maxlon, *rt.lch, rt.lpt[Lpt],rt.lpt[Rpt],ansvec);
-	if(maxlon >= rt.rch->minlon)query(minlat,maxlat,minlon,maxlon, *rt.rch, rt.rpt[Lpt],rt.rpt[Rpt],ansvec);
+	//printf("-%f %f\n",rt.minlon, rt.maxlon);
+	if(minlon <= rt.lch->maxlon)query(minlat,maxlat,minlon,maxlon, *rt.lch,
+			Lpt<rt.lch->p.size() ?rt.lpt[Lpt]:rt.lch->p.size(),
+			Rpt<rt.lch->p.size() ?rt.lpt[Rpt]:rt.lch->p.size(),
+			ansvec);
+	if(maxlon >= rt.rch->minlon)query(minlat,maxlat,minlon,maxlon, *rt.rch,
+			Lpt<rt.rch->p.size() ?rt.rpt[Lpt]:rt.rch->p.size(),
+			Rpt<rt.rch->p.size() ?rt.rpt[Rpt]:rt.rch->p.size(),
+			ansvec);
 }
 
 
@@ -172,7 +180,7 @@ vector<unsigned> Query(double minlat,double maxlat,double minlon,double maxlon,c
 void readin()
 {
 	//freopen("/Users/SpaceQ/iNut/151/Data Structure/PJ/shanghai_taxi_20150401_min.csv","r",stdin);
-	FILE *fp=fopen("/Users/SpaceQ/iNut/151/Data Structure/PJ/shanghai_taxi_20150401_min.csv","r");
+	FILE *fp=fopen("/Users/SpaceQ/iNut/151/Data Structure/PJ/shanghai_taxi_20150401.csv","r");
 	char buf[120];
 	int cnt=0;
 	double minlat = 180,maxlat = 0,minlon = 180,maxlon = 0;
@@ -197,16 +205,28 @@ void readin()
 }
 int main()
 {
+	clock_t t = clock();
 	readin();
 	sort(taxiinfo.begin(),taxiinfo.end());
 	segmentTreeNode root;
 	build(0,taxiinfo.size()-1,root);
 	printf("build Finsihed\nnodenum=%d\n",nodenum);
+	t = clock() - t;
+	printf("Build takes %fs\n", (float)t/ CLOCKS_PER_SEC);
 	double minlat,maxlat,minlon,maxlon;
-	scanf("%lf%lf%lf%lf",&minlat,&maxlat,&minlon,&maxlon);
-	vector<unsigned> ans = Query(minlat,maxlat,minlon,maxlon,root);
-	/*for(int i=0;i<ans.size();i++)
-		printf("%u ",ans[i]);
-	printf("\n");*/
+	int cnt=0;
+	freopen("data.in","r",stdin);
+	while(scanf("%lf%lf%lf%lf",&minlat,&maxlat,&minlon,&maxlon)!=EOF)
+	{
+		cnt ++;
+		static vector<unsigned> ans = Query(minlat,maxlat,minlon,maxlon,root);
+		/*for(int i=0;i<ans.size();i++)
+			printf("%u ",ans[i]);
+		printf("\n");*/
+	}
+	t = clock() - t;
+	printf("Query %d times takes %fs(average = %fµs)\n",
+			cnt, (float)t/ CLOCKS_PER_SEC, (float)t/ CLOCKS_PER_SEC/ cnt * 1000000);
+
 	return 0;
 }
