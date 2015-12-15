@@ -181,27 +181,39 @@ std::vector<unsigned> YWMap::AStarTime(unsigned startid, unsigned goalid, std::s
 {
 	clock_t Time = clock();
 	unsigned s = nodemap[startid], t = nodemap[goalid];
-	static std::set<unsigned> ClosedSet;
+	//static std::set<unsigned> ClosedSet;
+	static bool ClosedSet[maxn];
 	static std::priority_queue<std::pair<double, unsigned>, std::vector<std::pair<double,unsigned>>, std::greater<std::pair<double,unsigned>> > OpenSet;
-	static std::set<unsigned> inOpenSet;
-	static std::map<unsigned,double> g_score;
-	static std::map<unsigned,double> f_score;
-	ClosedSet.clear();
-	inOpenSet.clear();
-	inOpenSet.insert(s);
+	//static std::set<unsigned> inOpenSet;
+	static bool inOpenSet[maxn];
+	//static std::map<unsigned,double> g_score;
+	static double g_score[maxn];
+	//static std::map<unsigned,double> f_score;
+	static double f_score[maxn];
+	//ClosedSet.clear();
+	memset(ClosedSet, 0, sizeof(ClosedSet));
+	//inOpenSet.clear();
+	memset(inOpenSet, 0,sizeof(inOpenSet));
+	//inOpenSet.insert(s);
+	inOpenSet[s] = true;
 	while(OpenSet.size())OpenSet.pop();
 	OpenSet.push(std::make_pair(nodeDist(nodevec[s].p,nodevec[t].p),s));
 	Came_From.clear();
-	g_score.clear();g_score[s]=0;
-	f_score.clear();f_score[s]=nodeDist(nodevec[s].p, nodevec[t].p);
-	while(inOpenSet.size())
+	//g_score.clear();
+	for(int i=0;i<maxn;i++)g_score[i] = 1e30;
+	g_score[s]=0;
+	//f_score.clear();
+	for(int i=0;i<maxn;i++)f_score[i] = 1e30;
+	f_score[s]=nodeDist(nodevec[s].p, nodevec[t].p);
+	while(OpenSet.size())
 	{
 		//auto it = OpenSet.begin();
 		//unsigned current = *it;
 		unsigned current = OpenSet.top().second; OpenSet.pop();
-		if(inOpenSet.find(current) == inOpenSet.end()) continue;
-		inOpenSet.erase(current);
-
+		//if(inOpenSet.find(current) == inOpenSet.end()) continue;
+		if(!inOpenSet[current]) continue;
+		//inOpenSet.erase(current);
+		inOpenSet[current] = true;
 		if(current == t)
 		{
 			printf("[AStar]It takes %f minutes\n", g_score[t] * 60);
@@ -210,19 +222,23 @@ std::vector<unsigned> YWMap::AStarTime(unsigned startid, unsigned goalid, std::s
 			return reconstruct_path(t);
 		}
 
-		ClosedSet.insert(current);
+		//ClosedSet.insert(current);
+		ClosedSet[current] = true;
 		assert(nodevec[current].isway);
 		for(unsigned index:G[current])
 		{
 			edge& e = E[index];
-			if (ClosedSet.find(e.to)!=ClosedSet.end()) continue;
+			//if (ClosedSet.find(e.to)!=ClosedSet.end()) continue;
+			if(ClosedSet[e.to]) continue;
 			double time = (slowset.find(e.wayid) == slowset.end())? e.time : e.slowtime;
 			double tentative_g_score = g_score[current] + time;
-			if(inOpenSet.find(e.to) != inOpenSet.end() && tentative_g_score >= g_score[e.to]) continue;
+			//if(inOpenSet.find(e.to) != inOpenSet.end() && tentative_g_score >= g_score[e.to]) continue;
+			if(inOpenSet[e.to] && tentative_g_score >= g_score[e.to]) continue;
 			Came_From[e.to] = current;
 			g_score[e.to] = tentative_g_score;
 			f_score[e.to] = g_score[e.to] + nodeDist(nodevec[e.to].p, nodevec[t].p) / 80.0 ;
-			inOpenSet.insert(e.to);
+			//inOpenSet.insert(e.to);
+			inOpenSet[e.to] = true;
 			OpenSet.push(std::make_pair(f_score[e.to], e.to));
 		}
 	}

@@ -54,6 +54,24 @@ void YWMap::cmd_shortestpath()
 	cv::imwrite("shortestpath.png", path);
 }
 
+void YWMap::cmd_queryname()
+{
+	char buf[80];
+	scanf("%s", buf);
+	std::vector<std::pair<std::string,point>> name_points = map.queryName(buf);
+	if(name_points.size() == 0)
+	{
+		printf("%s NOT FOUND\n", buf);
+		return;
+	}
+	printf("%s is found %u times\n", buf, name_points.size());
+	for(std::pair<std::string,point> name_point : name_points)
+	{
+		printf("No.%u:%s(%f,%f)\n", map.getNodeIdByIndex(map.nearest(name_point.second)[0]),name_point.first.c_str(),
+				name_point.second.get<0>(),name_point.second.get<1>());
+	}
+}
+
 void YWMap::cmd_querybox()
 {
 	double minlat,maxlat,minlon,maxlon;

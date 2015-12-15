@@ -56,6 +56,7 @@ int main(int argc, char *argv[])
 				//shortestpath 1008057714 1813887498 2 227962891 11635095
 		else if(strcmp(buf, "querynode") == 0) YWMap::cmd_querybox(); //querynode 31.2449 121.4886 31.2349 121.5073
 		else if(strcmp(buf, "querynearest") == 0) YWMap::cmd_querynearest(); //querynearest 31.2392 121.4956 100
+		else if(strcmp(buf, "queryname") == 0) YWMap::cmd_queryname();
 		//else if(strcmp(buf, ""))
 		printf(">> ");
 		fflush(stdout);

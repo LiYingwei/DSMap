@@ -101,6 +101,7 @@ public:
 	static void cmd_shortestpath();
 	static void cmd_querybox();
 	static void cmd_querynearest();
+	static void cmd_queryname();
 	//////////////visit private element///////////////
 	unsigned getNodeIndexById(unsigned id);
 	unsigned getNodeIdByIndex(unsigned index);
