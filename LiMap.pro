@@ -27,7 +27,8 @@ SOURCES += main.cpp \
     cmd.cpp \
     nearest.cpp \
     visitprivateelement.cpp \
-    query.cpp
+    query.cpp \
+    taxi.cpp
 
 INCLUDEPATH += /usr/local/include/boost /usr/local/include/opencv2 /usr/local/include/
 

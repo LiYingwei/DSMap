@@ -134,3 +134,24 @@ void YWMap::cmd_queryway()
 	printf("	Dist:%fm\n", way.dist * 1000);
 	printf("	Type:%s\n", way.type.c_str());
 }
+
+void YWMap::cmd_querytaxi()
+{
+	unsigned id;
+	short h1,m1,s1,h2,m2,s2;
+	scanf("%u %hd:%hd:%hd %hd:%hd:%hd", &id,&h1,&m1,&s1,&h2,&m2,&s2);
+	printf("%u %hd:%hd:%hd %hd:%hd:%hd\n", id,h1,m1,s1,h2,m2,s2);
+	auto cmp = [](const taxi_struct& t1, const taxi_struct& t2) -> bool {
+		if (t1.id < t2.id) return true;
+		if (t1.id > t2.id) return false;
+		return timecmp(t1.hh,t1.mm,t1.ss,t2.hh,t2.mm,t2.ss) == -1;
+		//return t1.id < t2.id;
+	};
+	int s = std::lower_bound(map.taxiinfo.begin(),map.taxiinfo.end(),taxi_struct(id,h1,m1,s1),cmp) - map.taxiinfo.begin();
+	int t = std::upper_bound(map.taxiinfo.begin(),map.taxiinfo.end(),taxi_struct(id,h2,m2,s2),cmp) - map.taxiinfo.begin();
+	static std::vector<point> total_path;
+	printf("[DEBUG] s = %d t = %d\n", s,t);
+	for(int i = s; i < t; i++) total_path.push_back(point(map.taxiinfo[i].lat,map.taxiinfo[i].lon));
+	cv::Mat taxipath = map.PlotPath(total_path);
+	imwrite("taxipath.png", taxipath);
+}
