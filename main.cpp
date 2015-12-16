@@ -57,6 +57,7 @@ int main(int argc, char *argv[])
 		else if(strcmp(buf, "querynode") == 0) YWMap::cmd_querybox(); //querynode 31.2449 121.4886 31.2349 121.5073
 		else if(strcmp(buf, "querynearest") == 0) YWMap::cmd_querynearest(); //querynearest 31.2392 121.4956 100
 		else if(strcmp(buf, "queryname") == 0) YWMap::cmd_queryname();
+		else if(strcmp(buf, "queryway") == 0) YWMap::cmd_queryway(); //queryway 肇嘉浜路 queryway 世纪大道 queryway 272231909
 		//else if(strcmp(buf, ""))
 		printf(">> ");
 		fflush(stdout);

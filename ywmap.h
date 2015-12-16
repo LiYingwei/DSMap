@@ -47,6 +47,8 @@ struct way_struct
 	int thickness, boundthick;
 	double speed, slowspeed;
 	bool oneway;
+	std::string name;
+	double dist;
 	way_struct(unsigned id, int layer, std::string type, cv::Scalar color, cv::Scalar ccolor, int thickness, int boundthick, double speed, double slowspeed,bool oneway = false):
 		id(id),layer(layer),type(type),color(color),ccolor(ccolor),thickness(thickness),boundthick(boundthick),speed(speed), slowspeed(slowspeed), oneway(oneway)
 	{
@@ -102,20 +104,26 @@ public:
 	static void cmd_querybox();
 	static void cmd_querynearest();
 	static void cmd_queryname();
+	static void cmd_queryway();
 	//////////////visit private element///////////////
 	unsigned getNodeIndexById(unsigned id);
 	unsigned getNodeIdByIndex(unsigned index);
 	//////////////////////query///////////////////////
 	std::vector<std::pair<point,unsigned>> querybox(box b);
 	std::vector<std::pair<std::string,point>> queryName(char *P);
+	std::vector<std::pair<std::string,unsigned>> queryNameWay(char *P);
 	std::vector<unsigned> nearest(point p, int k = 1);
 	std::vector<std::pair<point, unsigned>> nearestForPlot(point p, int k = 1);
+
+
+
 private:
 	//bool sortLayerCmp(std::pair<int,std::pair<box, unsigned>> a,std::pair<int,std::pair<box, unsigned>> b);
 	pugi::xml_document doc_osm,doc_plot_conf,doc_speed_conf;
 	//double scalex,scaley,l;
 	//point p;
 
+	///////////////////////////data struct///////////////////
 	std::vector<node_struct> nodevec;
 	std::map<unsigned, unsigned> nodemap; // id -> index
 	std::vector<way_struct> wayvec;
@@ -132,6 +140,7 @@ private:
 	bgi::rtree< std::pair<point,unsigned> , bgi::quadratic<16> > water_line_tree;
 	bgi::rtree< std::pair<box,unsigned> , bgi::quadratic<16> > build_tree;  // box -> index of buildvec
 
+	/////////////////////////Plot////////////////////////////
 	void PlotWay(cv::Mat& ret, point p, double l, double scalex, double scaley, double factor);
 	void PlotWaterWay(cv::Mat& ret, point p, double l, double scalex, double scaley, double factor);
 	void PlotContour(cv::Mat& ret, point p, double l, double scalex, double scaley, double factor);
@@ -167,6 +176,13 @@ private:
 	int index[500000], sa[500000];
 	void build_sa();
 	int cmp_suffix(char *pattern, int p, int m);
+	std::vector<std::pair<std::string, unsigned>> nameListWay;
+	int SA_nWay;
+	char sWay[500000];
+	int indexWay[500000], saWay[500000];
+	void build_saWay();
+	int cmp_suffixWay(char *pattern, int p, int m);
+
 };
 
 #endif // YWMAP_H

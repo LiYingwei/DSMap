@@ -46,6 +46,8 @@ void YWMap::loadMap()
 		std::string type="default", subtype="default";
 		int layer=0;
 		bool bridge=false, oneway = false;
+		double dist=0;
+		std::string name;
 		for(tag = obj.last_child(); strcmp(tag.name(),"tag") == 0; tag = tag.previous_sibling())
 		{
 			//if(tag.attribute("k").as_string() == std::string("highway") ) waytype = tag.attribute("v").as_string("default");
@@ -57,8 +59,12 @@ void YWMap::loadMap()
 			if(tag.attribute("k").as_string() == std::string("oneway") && tag.attribute("v").as_string() == std::string("yes"))
 				oneway = true;
 			if(tag.attribute("k").as_string() == std::string("name") )
+			{
+				name = tag.attribute("v").as_string();
 				nameList.push_back(std::make_pair(tag.attribute("v").as_string(),
 												  nodevec[nodemap[obj.child("nd").attribute("ref").as_uint()]].p));
+				nameListWay.push_back(std::make_pair(tag.attribute("v").as_string(),id));
+			}
 		}
 
 		auto it = elementmap.find(make_pair(type,subtype));
@@ -129,8 +135,14 @@ void YWMap::loadMap()
 				if(nd == tag || nd == nd.parent().first_child()) nodevec[index].fanout++;
 				else nodevec[index].fanout += 2;
 
-				if(nd != tag)addEdge(nodemap[nd.attribute("ref").as_uint()], nodemap[nd.next_sibling().attribute("ref").as_uint()],speed, slowspeed, oneway, id);
+				if(nd != tag)
+				{
+					addEdge(nodemap[nd.attribute("ref").as_uint()], nodemap[nd.next_sibling().attribute("ref").as_uint()],speed, slowspeed, oneway, id);
+					dist += nodeDist(nodevec[index].p,nodevec[nodemap[nd.next_sibling().attribute("ref").as_uint()]].p);
+				}
 			}
+			wayvec[wayvec.size() - 1].dist = dist;
+			wayvec[wayvec.size() - 1].name = name;
 		}
 		else if(elementvec[it->second]["method"] == std::string("line"))
 		{
@@ -196,6 +208,7 @@ void YWMap::loadMap()
 	std::cout << nameList.size() << std::endl;
 		//std::cout << nameList[i].first << std::endl;*/
 	build_sa();
+	build_saWay();
 
 
 }

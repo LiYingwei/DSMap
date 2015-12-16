@@ -98,3 +98,39 @@ void YWMap::cmd_querynearest()
 	cv::Mat nearest = map.PlotPointNearest(p, result, cv::Scalar(0x24, 0xA7, 0x6D));
 	cv::imwrite("nearest.png", nearest);
 }
+
+void YWMap::cmd_queryway()
+{
+	char buf[80];
+	scanf("%s", buf);
+	unsigned id;
+	id = strtoul(buf,NULL,0);
+	if(map.waymap.find(id) == map.waymap.end())
+	{
+		std::vector<std::pair<std::string, unsigned>> ways = map.queryNameWay(buf);
+		printf("Way Information:\n");
+		double total=0;
+		for(auto way:ways)
+		{
+			if(strcmp(buf,way.first.c_str()) == 0)
+			{
+				unsigned id = way.second;
+				unsigned index = map.waymap[id];
+				printf("	ID:%u\n", id);
+				printf("	Name:%s\n", way.first.c_str());
+				printf("	Dist:%fm\n", map.wayvec[index].dist * 1000);
+				printf("	Type:%s\n\n", map.wayvec[index].type.c_str());
+				//if(map.wayvec[index].speed >= 40)
+					total += map.wayvec[index].dist;
+			}
+		}
+		printf("Total length = %fkm\n", total);
+		return;
+	}
+	const way_struct &way = map.wayvec[map.waymap[id]];
+	printf("Way Information:\n");
+	printf("	ID:%u\n", id);
+	printf("	Name:%s\n", way.name.c_str());
+	printf("	Dist:%fm\n", way.dist * 1000);
+	printf("	Type:%s\n", way.type.c_str());
+}
