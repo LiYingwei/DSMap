@@ -16,11 +16,11 @@ void YWMap::addEdge(unsigned indexfrom, unsigned indexto, double speed, double s
 	double time = dist / speed;
 	double slowtime = dist / slowspeed;
 	//printf("speed = %f, time = %f\n", speed, time);
-	E.push_back(edge(indexfrom,indexto,dist,time,slowtime,wayid));
+	E.push_back(edge(indexfrom,indexto,dist,speed,time,slowtime,wayid));
 	G[indexfrom].push_back(E.size() - 1);
 	if(!oneway)
 	{
-		E.push_back(edge(indexto, indexfrom, dist, time, slowtime,wayid));
+		E.push_back(edge(indexto, indexfrom, dist,speed,time, slowtime,wayid));
 		G[indexto].push_back(E.size() - 1);
 	}
 }
@@ -43,9 +43,8 @@ std::vector<unsigned> YWMap::reconstruct_path(unsigned current)
 	return total_path;
 }
 
-std::vector<unsigned> YWMap::SPFA(unsigned startid, unsigned goalid)
+std::vector<unsigned> YWMap::SPFA(unsigned startid, unsigned goalid, clock_t &Time)
 {
-	clock_t Time = clock();
 	unsigned s = nodemap[startid], t = nodemap[goalid];
 
 	static std::queue<unsigned> Q;
@@ -58,6 +57,7 @@ std::vector<unsigned> YWMap::SPFA(unsigned startid, unsigned goalid)
 	memset(v,0,sizeof(v));
 	d[s] = 0;
 	Came_From.clear();
+	Time = clock();
 	while(Q.size())
 	{
 		unsigned x = Q.front();Q.pop();v[x]=false;
@@ -76,6 +76,13 @@ std::vector<unsigned> YWMap::SPFA(unsigned startid, unsigned goalid)
 			}
 		}
 	}
+	if(d[t]>1e20)
+	{
+		printf("[SPFA]No way found!\n");
+		Time = clock();
+		while((float)Time / CLOCKS_PER_SEC < 20) Time *= 10;
+		return reconstruct_path(t);
+	}
 	printf("[SPFA]The dist is %fkm\n", d[t]);
 	//assert(d[t]<1e29);
 	Time = clock() - Time;
@@ -83,9 +90,8 @@ std::vector<unsigned> YWMap::SPFA(unsigned startid, unsigned goalid)
 	return reconstruct_path(t);
 }
 
-std::vector<unsigned> YWMap::SPFATime(unsigned startid, unsigned goalid, std::set<unsigned> slowset = std::set<unsigned>())
+std::vector<unsigned> YWMap::SPFATime(unsigned startid, unsigned goalid, clock_t &Time, std::set<unsigned> slowset = std::set<unsigned>())
 {
-	clock_t Time = clock();
 	unsigned s = nodemap[startid], t = nodemap[goalid];
 
 	static std::queue<unsigned> Q;
@@ -98,6 +104,7 @@ std::vector<unsigned> YWMap::SPFATime(unsigned startid, unsigned goalid, std::se
 	memset(v,0,sizeof(v));
 	d[s] = 0;
 	Came_From.clear();
+	Time = clock();
 	while(Q.size())
 	{
 		unsigned x = Q.front();Q.pop();v[x]=false;
@@ -105,6 +112,7 @@ std::vector<unsigned> YWMap::SPFATime(unsigned startid, unsigned goalid, std::se
 		{
 			edge&e = E[G[x][i]];
 			double time = (slowset.find(e.wayid)==slowset.end())?e.time:e.slowtime;
+			time = time * 1.5;
 			if(d[e.to]>d[e.from]+time)
 			{
 				d[e.to] = d[e.from] + time;
@@ -117,6 +125,13 @@ std::vector<unsigned> YWMap::SPFATime(unsigned startid, unsigned goalid, std::se
 			}
 		}
 	}
+	if(d[t]>1e20)
+	{
+		printf("[SPFA]No way found!\n");
+		Time = clock();
+		while((float)Time / CLOCKS_PER_SEC < 20) Time *= 10;
+		return reconstruct_path(t);
+	}
 	printf("[SPFA]It takes %f minutes\n", d[t] * 60);
 	//assert(d[t]<1e29);
 	Time = clock() - Time;
@@ -125,9 +140,9 @@ std::vector<unsigned> YWMap::SPFATime(unsigned startid, unsigned goalid, std::se
 }
 
 
-std::vector<unsigned> YWMap::AStarDist(unsigned startid, unsigned goalid) // index, index
+std::vector<unsigned> YWMap::AStarDist(unsigned startid, unsigned goalid, clock_t &Time) // index, index
 {
-	clock_t Time = clock();
+	/*clock_t Time = clock();
 	unsigned s = nodemap[startid], t = nodemap[goalid];
 	static std::set<unsigned> ClosedSet;
 	static std::priority_queue<std::pair<double, unsigned>, std::vector<std::pair<double,unsigned>>, std::greater<std::pair<double,unsigned>> > OpenSet;
@@ -173,13 +188,7 @@ std::vector<unsigned> YWMap::AStarDist(unsigned startid, unsigned goalid) // ind
 			OpenSet.push(std::make_pair(f_score[e.to], e.to));
 		}
 	}
-	printf("[AStar] No way found!\n");
-}
-
-
-std::vector<unsigned> YWMap::AStarTime(unsigned startid, unsigned goalid, std::set<unsigned> slowset = std::set<unsigned>()) // index, index
-{
-	clock_t Time = clock();
+	printf("[AStar] No way found!\n");*/
 	unsigned s = nodemap[startid], t = nodemap[goalid];
 	//static std::set<unsigned> ClosedSet;
 	static bool ClosedSet[maxn];
@@ -205,6 +214,79 @@ std::vector<unsigned> YWMap::AStarTime(unsigned startid, unsigned goalid, std::s
 	//f_score.clear();
 	for(int i=0;i<maxn;i++)f_score[i] = 1e30;
 	f_score[s]=nodeDist(nodevec[s].p, nodevec[t].p);
+	Time = clock();
+	while(OpenSet.size())
+	{
+		//auto it = OpenSet.begin();
+		//unsigned current = *it;
+		unsigned current = OpenSet.top().second; OpenSet.pop();
+		//if(inOpenSet.find(current) == inOpenSet.end()) continue;
+		if(!inOpenSet[current]) continue;
+		//inOpenSet.erase(current);
+		inOpenSet[current] = true;
+		if(current == t)
+		{
+			printf("[AStar]The dist is %fkm\n", g_score[t]);
+			Time = clock() - Time;
+			printf("[AStar]%fms used\n", (float)Time/CLOCKS_PER_SEC * 1000);
+			return reconstruct_path(t);
+		}
+
+		if(ClosedSet[current]) continue;
+		//ClosedSet.insert(current);
+		ClosedSet[current] = true;
+		//assert(nodevec[current].isway);
+		for(unsigned index:G[current])
+		{
+			edge& e = E[index];
+			//if (ClosedSet.find(e.to)!=ClosedSet.end()) continue;
+			if(ClosedSet[e.to]) continue;
+			//double time = (slowset.find(e.wayid) == slowset.end())? e.time : e.slowtime;
+			double tentative_g_score = g_score[current] + e.dist;
+			//if(inOpenSet.find(e.to) != inOpenSet.end() && tentative_g_score >= g_score[e.to]) continue;
+			if(inOpenSet[e.to] && tentative_g_score >= g_score[e.to]) continue;
+			Came_From[e.to] = current;
+			g_score[e.to] = tentative_g_score;
+			f_score[e.to] = g_score[e.to] + nodeDist(nodevec[e.to].p, nodevec[t].p);
+			//inOpenSet.insert(e.to);
+			inOpenSet[e.to] = true;
+			OpenSet.push(std::make_pair(f_score[e.to], e.to));
+		}
+	}
+	printf("[AStar] No way found!\n");
+	Time = clock() - Time;
+	return std::vector<unsigned>();
+}
+
+
+std::vector<unsigned> YWMap::AStarTime(unsigned startid, unsigned goalid, clock_t &Time, std::set<unsigned> slowset = std::set<unsigned>()) // index, index
+{
+	unsigned s = nodemap[startid], t = nodemap[goalid];
+	//static std::set<unsigned> ClosedSet;
+	static bool ClosedSet[maxn];
+	static std::priority_queue<std::pair<double, unsigned>, std::vector<std::pair<double,unsigned>>, std::greater<std::pair<double,unsigned>> > OpenSet;
+	//static std::set<unsigned> inOpenSet;
+	static bool inOpenSet[maxn];
+	//static std::map<unsigned,double> g_score;
+	static double g_score[maxn];
+	//static std::map<unsigned,double> f_score;
+	static double f_score[maxn];
+	//ClosedSet.clear();
+	memset(ClosedSet, 0, sizeof(ClosedSet));
+	//inOpenSet.clear();
+	memset(inOpenSet, 0,sizeof(inOpenSet));
+	//inOpenSet.insert(s);
+	inOpenSet[s] = true;
+	while(OpenSet.size())OpenSet.pop();
+	OpenSet.push(std::make_pair(nodeDist(nodevec[s].p,nodevec[t].p),s));
+	Came_From.clear();
+	//g_score.clear();
+	for(int i=0;i<maxn;i++)g_score[i] = 1e30;
+	g_score[s]=0;
+	//f_score.clear();
+	for(int i=0;i<maxn;i++)f_score[i] = 1e30;
+	f_score[s]=nodeDist(nodevec[s].p, nodevec[t].p);
+	Time = clock();
 	while(OpenSet.size())
 	{
 		//auto it = OpenSet.begin();
@@ -222,43 +304,47 @@ std::vector<unsigned> YWMap::AStarTime(unsigned startid, unsigned goalid, std::s
 			return reconstruct_path(t);
 		}
 
+		if(ClosedSet[current]) continue;
 		//ClosedSet.insert(current);
 		ClosedSet[current] = true;
-		assert(nodevec[current].isway);
+		//assert(nodevec[current].isway);
 		for(unsigned index:G[current])
 		{
 			edge& e = E[index];
 			//if (ClosedSet.find(e.to)!=ClosedSet.end()) continue;
 			if(ClosedSet[e.to]) continue;
 			double time = (slowset.find(e.wayid) == slowset.end())? e.time : e.slowtime;
+			time = time * 1.5;
 			double tentative_g_score = g_score[current] + time;
 			//if(inOpenSet.find(e.to) != inOpenSet.end() && tentative_g_score >= g_score[e.to]) continue;
 			if(inOpenSet[e.to] && tentative_g_score >= g_score[e.to]) continue;
 			Came_From[e.to] = current;
 			g_score[e.to] = tentative_g_score;
-			f_score[e.to] = g_score[e.to] + nodeDist(nodevec[e.to].p, nodevec[t].p) / 80.0 ;
+			f_score[e.to] = g_score[e.to] + nodeDist(nodevec[e.to].p, nodevec[t].p) / 80 * 1.5 ;
 			//inOpenSet.insert(e.to);
 			inOpenSet[e.to] = true;
 			OpenSet.push(std::make_pair(f_score[e.to], e.to));
 		}
 	}
 	printf("[AStar] No way found!\n");
+	Time = clock() - Time;
+	return std::vector<unsigned>();
 }
 
-std::vector<unsigned> YWMap::dijkstraDist(unsigned startid, unsigned goalid)
+std::vector<unsigned> YWMap::dijkstraDist(unsigned startid, unsigned goalid, clock_t &Time)
 {
-	clock_t Time = clock();
 	unsigned s = nodemap[startid], t = nodemap[goalid];
 	static std::priority_queue<std::pair<double,unsigned>,std::vector<std::pair<double,unsigned> >, std::greater<std::pair<double,unsigned> > >Q;
 	static double d[maxn];
 	static bool done[maxn];
 
 	while(Q.size())Q.pop();
-	memset(d,63,sizeof(d));
+	for(int i=0;i<maxn;i++) d[i] = 1e30;
 	memset(done,0,sizeof(done));
 
 	Q.push(std::make_pair(0,s));
 	d[s] = 0;
+	Time = clock();
 	while(Q.size())
 	{
 		unsigned x = Q.top().second;
@@ -284,11 +370,12 @@ std::vector<unsigned> YWMap::dijkstraDist(unsigned startid, unsigned goalid)
 		}
 	}
 	printf("[Dijkstra] No way found!\n");
+	Time = clock() - Time;
+	return std::vector<unsigned>();
 }
 
-std::vector<unsigned> YWMap::dijkstraTime(unsigned startid, unsigned goalid, std::set<unsigned> slowset = std::set<unsigned>())
+std::vector<unsigned> YWMap::dijkstraTime(unsigned startid, unsigned goalid,  clock_t &Time, std::set<unsigned> slowset = std::set<unsigned>())
 {
-	clock_t Time = clock();
 	unsigned s = nodemap[startid], t = nodemap[goalid];
 	static std::priority_queue<std::pair<double,unsigned>,std::vector<std::pair<double,unsigned> >, std::greater<std::pair<double,unsigned> > >Q;
 	static double d[maxn];
@@ -301,6 +388,7 @@ std::vector<unsigned> YWMap::dijkstraTime(unsigned startid, unsigned goalid, std
 
 	Q.push(std::make_pair(0,s));
 	d[s] = 0;
+	Time = clock();
 	while(Q.size())
 	{
 		unsigned x = Q.top().second;
@@ -311,6 +399,7 @@ std::vector<unsigned> YWMap::dijkstraTime(unsigned startid, unsigned goalid, std
 		{
 			edge&e=E[index];
 			double time = (slowset.find(e.wayid) == slowset.end())? e.time : e.slowtime;
+			time = time * 1.5;
 			if(d[e.to] > d[e.from] + time)
 			{
 				d[e.to] = d[e.from] + time;
@@ -327,4 +416,6 @@ std::vector<unsigned> YWMap::dijkstraTime(unsigned startid, unsigned goalid, std
 		}
 	}
 	printf("[Dijkstra] No way found!\n");
+	Time = clock() - Time;
+	return std::vector<unsigned>();
 }

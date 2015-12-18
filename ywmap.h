@@ -74,9 +74,9 @@ struct building_struct
 struct edge
 {
 	unsigned from, to;
-	double dist, time, slowtime;
+	double dist, speed, time, slowtime;
 	unsigned wayid;
-	edge(unsigned from,unsigned to, double dist, double time, double slowtime, unsigned wayid):from(from),to(to),dist(dist),time(time),slowtime(slowtime),wayid(wayid){}
+	edge(unsigned from,unsigned to, double dist, double speed, double time, double slowtime, unsigned wayid):from(from),to(to),dist(dist),speed(speed),time(time),slowtime(slowtime),wayid(wayid){}
 };
 
 struct taxi_struct
@@ -126,12 +126,12 @@ public:
 	void loadtaxi();
 	cv::Mat Plot(point p, double l, double scale, double factor);
 	cv::Mat Plot(point p, int level, int div = 1);
-	std::vector<unsigned> AStarDist(unsigned s,unsigned t);
-	std::vector<unsigned> AStarTime(unsigned s,unsigned t, std::set<unsigned> slowset);
-	std::vector<unsigned> SPFA(unsigned s, unsigned t);
-	std::vector<unsigned> SPFATime(unsigned s, unsigned t, std::set<unsigned> slowset);
-	std::vector<unsigned> dijkstraDist(unsigned s, unsigned t);
-	std::vector<unsigned> dijkstraTime(unsigned s, unsigned t, std::set<unsigned> slowset);
+	std::vector<unsigned> AStarDist(unsigned s,unsigned t, clock_t &Time);
+	std::vector<unsigned> AStarTime(unsigned s, unsigned t, clock_t &Time, std::set<unsigned> slowset);
+	std::vector<unsigned> SPFA(unsigned s, unsigned t, clock_t &Time);
+	std::vector<unsigned> SPFATime(unsigned s, unsigned t, clock_t &Time, std::set<unsigned> slowset);
+	std::vector<unsigned> dijkstraDist(unsigned s, unsigned t, clock_t &Time);
+	std::vector<unsigned> dijkstraTime(unsigned s, unsigned t, clock_t &Time, std::set<unsigned> slowset);
 	cv::Mat PlotShortestPath(std::vector<unsigned> total_path, cv::Scalar color=cv::Scalar(0x00,0x00,0xFF));
 	cv::Mat PlotPath(std::vector<point> total_path, cv::Scalar color=cv::Scalar(0x00,0x00,0xFF));
 	cv::Mat PlotPointInBox(box b, std::vector<std::pair<point,unsigned>> nodes, cv::Scalar color = cv::Scalar(0xFF, 0xCC, 0xCC));
@@ -145,6 +145,7 @@ public:
 	static void cmd_queryname();
 	static void cmd_queryway();
 	static void cmd_querytaxi();
+	static void cmd_shortesttest();
 	//////////////visit private element///////////////
 	unsigned getNodeIndexById(unsigned id);
 	unsigned getNodeIdByIndex(unsigned index);

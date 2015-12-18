@@ -7,6 +7,13 @@ void YWMap::plotPolyLayer(cv::Mat &img, xml_node way, point p, double scale)
 	//do nothing.
 }*/
 
+/*static cv::Scalar random_color(cv::RNG& rng)
+{
+	int icolor = (unsigned)rng;
+
+	return Scalar(icolor&0xFF, (icolor>>8)&0xFF, (icolor>>16)&0xFF);
+}*/
+
 void YWMap::plotPoly(cv::Mat &img, pugi::xml_node way, point p, double scalex, double scaley,cv::Scalar color,cv::Scalar ccolor, int boundthick)
 {
 	std::vector<std::vector<cv::Point>>contourElement(1);

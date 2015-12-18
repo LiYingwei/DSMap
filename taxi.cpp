@@ -2,6 +2,7 @@
 
 void YWMap::loadtaxi()
 {
+	clock_t Time = clock();
 	//freopen("/Users/SpaceQ/iNut/151/Data Structure/PJ/shanghai_taxi_20150401_min.csv","r",stdin);
 	FILE *fp=fopen("shanghai_taxi_20150401.csv","r");
 	char buf[120];
@@ -25,7 +26,9 @@ void YWMap::loadtaxi()
 	printf("Taxi Data Load Finished\n");
 	printf("Taxi Number = %d\n",cnt);
 	printf("Range:");
-	printf("minlat = %f maxlat = %f minlon = %f maxlon = %f\n", minlat, maxlat, minlon, maxlon);
+	printf("lat(%f~%f) lon(%f~%f)\n", minlat, maxlat, minlon, maxlon);
+	Time = clock() - Time;
+	printf("It takes %fs\n", (float)Time / CLOCKS_PER_SEC);
 }
 
 int YWMap::timecmp(short h1,short m1,short s1,short h2,short m2,short s2)
