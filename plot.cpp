@@ -195,7 +195,7 @@ cv::Mat YWMap::PlotPointNearest(point po, std::vector<std::pair<point,unsigned>>
 	double scalex = scale;
 	double scaley = scale * cos(p.get<0>());
 
-	cv::circle(ret, p2P(po, p, scalex, scaley), 6, color, 3, CV_AA);
+	cv::circle(ret, p2P(po, p, scalex, scaley), 6, cv::Scalar(0,0,255), 3, CV_AA);
 	for(auto node: nodes)
 	{
 		cv::circle(ret, p2P(node.first, p, scalex, scaley), 1, color, 3, CV_AA);

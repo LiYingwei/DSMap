@@ -146,6 +146,7 @@ public:
 	static void cmd_queryway();
 	static void cmd_querytaxi();
 	static void cmd_shortesttest();
+	static void cmd_insertpoint();
 	//////////////visit private element///////////////
 	unsigned getNodeIndexById(unsigned id);
 	unsigned getNodeIdByIndex(unsigned index);

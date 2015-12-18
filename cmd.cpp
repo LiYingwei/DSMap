@@ -222,3 +222,10 @@ void YWMap::cmd_shortesttest()
 	printf("[DijkTIme] %fms average\n", 1000*dijkstraTime/cnt2);
 	printf("[A\*  Time] %fms average\n", 1000*AStarTime/cnt2);
 }
+
+void YWMap::cmd_insertpoint()
+{
+	double lat,lon;
+	scanf("%lf%lf",&lat,&lon);
+	map.way_node_tree.insert(std::make_pair(point(lat,lon),0));
+}

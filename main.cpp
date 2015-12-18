@@ -62,6 +62,11 @@ int main(int argc, char *argv[])
 		else if(strcmp(buf, "loadtaxi") == 0) map.loadtaxi();
 		else if(strcmp(buf, "querytaxi") == 0) YWMap::cmd_querytaxi();//querytaxi 10944 0:0:0 24:0:0
 		else if(strcmp(buf, "shortesttest") == 0) YWMap::cmd_shortesttest();
+		else if(strcmp(buf, "insertpoint") == 0) YWMap::cmd_insertpoint();
+		//>> querynode 31.2449 121.4886 31.24 121.49
+		//>> insertpoint 31.2440 121.489
+		//>> querynode 31.2449 121.4886 31.24 121.49
+
 		else printf("cmd not FOUND\n");
 		//else if(strcmp(buf, ""))
 		printf(">> ");
