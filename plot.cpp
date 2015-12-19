@@ -195,13 +195,94 @@ cv::Mat YWMap::PlotPointNearest(point po, std::vector<std::pair<point,unsigned>>
 	double scalex = scale;
 	double scaley = scale * cos(p.get<0>());
 
-	cv::circle(ret, p2P(po, p, scalex, scaley), 6, color, 3, CV_AA);
+	cv::circle(ret, p2P(po, p, scalex, scaley), 6, cv::Scalar(0,0,255), 3, CV_AA);
 	for(auto node: nodes)
 	{
 		cv::circle(ret, p2P(node.first, p, scalex, scaley), 1, color, 3, CV_AA);
 	}
 	return ret;
 }
+
+cv::Mat YWMap::PlotPoints(std::vector<point> nodes, cv::Scalar color)
+{
+	assert(nodes.size() != 0);
+	double minlat = nodes[0].get<0>(),
+			minlon = nodes[0].get<1>(),
+			maxlat = nodes[0].get<0>(),
+			maxlon = nodes[0].get<1>();
+	for(int i = 1; i < nodes.size(); i++)
+	{
+		minlat = fmin(minlat, nodes[i].get<0>());
+		maxlat = fmax(maxlat, nodes[i].get<0>());
+		minlon = fmin(minlon, nodes[i].get<1>());
+		maxlon = fmax(maxlon, nodes[i].get<1>());
+	}
+	double l = fmax(maxlat - minlat, maxlon - minlon) * 1.3;
+	int level=18;
+	if(l>0.005)level = 17;
+	if(l>0.01) level = 16;
+	if(l>0.02) level = 15;
+	if(l>0.04) level = 14;
+	if(l>0.08) level = 13;
+	if(l>0.16) level = 12;
+	if(l>0.32) level = 11;
+	point P = point((maxlat + minlat)/2, (maxlon + minlon)/2);
+	printf("minlat = %f maxlat = %f minlon = %f maxlon = %f\n", minlat, maxlat, minlon, maxlon);
+	printf("%f %f===level = %d \n",(maxlat + minlat)/2, (maxlon + minlon)/2, level);
+	cv::Mat ret = Plot(P,level);
+	l = 1310.72 * pow(2.0 ,-level);
+	point p(P.get<0>()+l/2,P.get<1>()-l/2);
+	double scale = 2560/l;
+	double scalex = scale;
+	double scaley = scale * cos(p.get<0>());
+
+	for(auto node: nodes)
+	{
+		cv::circle(ret, p2P(node, p, scalex, scaley), 1, color, 3, CV_AA);
+	}
+	return ret;
+}
+
+cv::Mat YWMap::PlotColorfulPoints(std::vector<std::pair<point, cv::Scalar>> nodes)
+{
+	assert(nodes.size() != 0);
+	double minlat = nodes[0].first.get<0>(),
+			minlon = nodes[0].first.get<1>(),
+			maxlat = nodes[0].first.get<0>(),
+			maxlon = nodes[0].first.get<1>();
+	for(int i = 1; i < nodes.size(); i++)
+	{
+		minlat = fmin(minlat, nodes[i].first.get<0>());
+		maxlat = fmax(maxlat, nodes[i].first.get<0>());
+		minlon = fmin(minlon, nodes[i].first.get<1>());
+		maxlon = fmax(maxlon, nodes[i].first.get<1>());
+	}
+	double l = fmax(maxlat - minlat, maxlon - minlon) * 1.3;
+	int level=18;
+	if(l>0.005)level = 17;
+	if(l>0.01) level = 16;
+	if(l>0.02) level = 15;
+	if(l>0.04) level = 14;
+	if(l>0.08) level = 13;
+	if(l>0.16) level = 12;
+	if(l>0.32) level = 11;
+	point P = point((maxlat + minlat)/2, (maxlon + minlon)/2);
+	printf("minlat = %f maxlat = %f minlon = %f maxlon = %f\n", minlat, maxlat, minlon, maxlon);
+	printf("%f %f===level = %d \n",(maxlat + minlat)/2, (maxlon + minlon)/2, level);
+	cv::Mat ret = Plot(P,level);
+	l = 1310.72 * pow(2.0 ,-level);
+	point p(P.get<0>()+l/2,P.get<1>()-l/2);
+	double scale = 2560/l;
+	double scalex = scale;
+	double scaley = scale * cos(p.get<0>());
+
+	for(auto node: nodes)
+	{
+		cv::circle(ret, p2P(node.first, p, scalex, scaley), 1, node.second, 3, CV_AA);
+	}
+	return ret;
+}
+
 
 cv::Mat YWMap::PlotPointInBox(box b, std::vector<std::pair<point, unsigned> > nodes, cv::Scalar color)
 {
@@ -273,6 +354,55 @@ cv::Mat YWMap::PlotShortestPath(std::vector<unsigned> total_path, cv::Scalar col
 	{
 		point s = nodevec[total_path[i]].p;
 		point t = nodevec[total_path[i+1]].p;
+		//printf("(%f,%f)(%f,%f)(%f,%f) l = %f scalex = %f scaley = %f\n",s.get<0>(), s.get<1>(), t.get<0>(), t.get<1>(), p.get<0>(), p.get<1>(), l,scalex,scaley);
+		plotline(ret, s, t, p, l, scalex, scaley , color, 3, CV_AA);
+	}
+	//imwrite("out.png", ret);
+	//cv::imshow("ret",ret);
+	//cv::waitKey(0);
+	return ret;
+}
+
+cv::Mat YWMap::PlotPath(std::vector<point> total_path, cv::Scalar color)
+{
+	//assert(total_path.size() != 0);
+	if(total_path.size() == 0)
+	{
+		printf("Nothing to plot\n");
+		return cv::Mat();
+	}
+	double minlat = total_path[0].get<0>(),
+			minlon = total_path[0].get<1>(),
+			maxlat = total_path[0].get<0>(),
+			maxlon = total_path[0].get<1>();
+	for(int i = 1; i < total_path.size(); i++)
+	{
+		minlat = fmin(minlat, total_path[i].get<0>());
+		maxlat = fmax(maxlat, total_path[i].get<0>());
+		minlon = fmin(minlon, total_path[i].get<1>());
+		maxlon = fmax(maxlon, total_path[i].get<1>());
+	}
+	double l = fmax(maxlat - minlat, maxlon - minlon) * 1.3;
+	int level=18;
+	if(l>0.005)level = 17;
+	if(l>0.01) level = 16;
+	if(l>0.02) level = 15;
+	if(l>0.04) level = 14;
+	if(l>0.08) level = 13;
+	if(l>0.16) level = 12;
+	if(l>0.32) level = 11;
+	point P = point((maxlat + minlat)/2, (maxlon + minlon)/2);
+	//printf("%f %f===level = %d \n",(maxlat + minlat)/2, (maxlon + minlon)/2, level);
+	cv::Mat ret = Plot(P,level);
+	l = 1310.72 * pow(2.0 ,-level);
+	point p(P.get<0>()+l/2,P.get<1>()-l/2);
+	double scale = 2560/l;
+	double scalex = scale;
+	double scaley = scale * cos(p.get<0>());
+	for(int i = 0; i < total_path.size()-1; i++)
+	{
+		point s = total_path[i];
+		point t = total_path[i+1];
 		//printf("(%f,%f)(%f,%f)(%f,%f) l = %f scalex = %f scaley = %f\n",s.get<0>(), s.get<1>(), t.get<0>(), t.get<1>(), p.get<0>(), p.get<1>(), l,scalex,scaley);
 		plotline(ret, s, t, p, l, scalex, scaley , color, 3, CV_AA);
 	}

@@ -47,6 +47,8 @@ struct way_struct
 	int thickness, boundthick;
 	double speed, slowspeed;
 	bool oneway;
+	std::string name;
+	double dist;
 	way_struct(unsigned id, int layer, std::string type, cv::Scalar color, cv::Scalar ccolor, int thickness, int boundthick, double speed, double slowspeed,bool oneway = false):
 		id(id),layer(layer),type(type),color(color),ccolor(ccolor),thickness(thickness),boundthick(boundthick),speed(speed), slowspeed(slowspeed), oneway(oneway)
 	{
@@ -72,9 +74,47 @@ struct building_struct
 struct edge
 {
 	unsigned from, to;
-	double dist, time, slowtime;
+	double dist, speed, time, slowtime;
 	unsigned wayid;
-	edge(unsigned from,unsigned to, double dist, double time, double slowtime, unsigned wayid):from(from),to(to),dist(dist),time(time),slowtime(slowtime),wayid(wayid){}
+	edge(unsigned from,unsigned to, double dist, double speed, double time, double slowtime, unsigned wayid):from(from),to(to),dist(dist),speed(speed),time(time),slowtime(slowtime),wayid(wayid){}
+};
+
+struct taxi_struct
+{
+	int id;
+	short hh,mm,ss;
+	short alert;
+	double lon,lat;
+	short empty;
+	char light;
+	short high, brake;
+	double v,dir;
+	short satellite;
+	taxi_struct(){}
+	taxi_struct(int id,short hh,short mm,short ss,short alert,double lon,double lat,
+			short empty,char light,short high,short brake,double v,double dir, short satellite):
+		id(id), hh(hh), mm(mm), ss(ss), alert(alert), lon(lon), lat(lat), empty(empty), light(light),
+		high(high), brake(brake), v(v), dir(dir), satellite(satellite){}
+	taxi_struct(int id,short hh,short mm,short ss):id(id),hh(hh),mm(mm),ss(ss){}
+	taxi_struct(int id):id(id){}
+	void read(char* buf)
+	{
+		char t[30],date[15],stime[15];
+		sscanf(buf,"%d,%[^,],%hd,%lf,%lf,%hd,%c,%hd,%hd,%lf,%lf,%hd",
+				   &id,t,&alert,&lon,&lat,&empty,&light,&high,&brake,&v,&dir,&satellite);
+		sscanf(t,"%s%s",date,stime);
+		sscanf(stime,"%hd:%hd:%hd", &hh,&mm,&ss);
+	}
+	void print()
+	{
+		printf("%d,%hd:%hd:%hd,%hd,%lf,%lf,%hd,%c,%hd,%hd,%lf,%lf,%hd\n",
+				id,hh,mm,ss,alert,lon,lat,empty,light,high,brake,v,dir,satellite);
+	}
+	bool operator<(const taxi_struct& o) const
+	{
+		return lon < o.lon;
+	}
+	int time() const{return (int)hh * 3600 + (int)mm * 60 + (int)ss;}
 };
 
 class YWMap
@@ -84,35 +124,52 @@ public:
 	void loadPlotConf();
 	void loadSpeedConf();
 	void loadMap(); //load map node to rtree, way and relation to map(id -> xml_node)
+	void loadtaxi();
 	cv::Mat Plot(point p, double l, double scale, double factor);
 	cv::Mat Plot(point p, int level, int div = 1);
-	std::vector<unsigned> AStarDist(unsigned s,unsigned t);
-	std::vector<unsigned> AStarTime(unsigned s,unsigned t, std::set<unsigned> slowset);
-	std::vector<unsigned> SPFA(unsigned s, unsigned t);
-	std::vector<unsigned> SPFATime(unsigned s, unsigned t, std::set<unsigned> slowset);
+	std::vector<unsigned> AStarDist(unsigned s,unsigned t, clock_t &Time);
+	std::vector<unsigned> AStarTime(unsigned s, unsigned t, clock_t &Time, std::set<unsigned> slowset);
+	std::vector<unsigned> SPFA(unsigned s, unsigned t, clock_t &Time);
+	std::vector<unsigned> SPFATime(unsigned s, unsigned t, clock_t &Time, std::set<unsigned> slowset);
+	std::vector<unsigned> dijkstraDist(unsigned s, unsigned t, clock_t &Time);
+	std::vector<unsigned> dijkstraTime(unsigned s, unsigned t, clock_t &Time, std::set<unsigned> slowset);
 	cv::Mat PlotShortestPath(std::vector<unsigned> total_path, cv::Scalar color=cv::Scalar(0x00,0x00,0xFF));
+	cv::Mat PlotPath(std::vector<point> total_path, cv::Scalar color=cv::Scalar(0x00,0x00,0xFF));
 	cv::Mat PlotPointInBox(box b, std::vector<std::pair<point,unsigned>> nodes, cv::Scalar color = cv::Scalar(0xFF, 0xCC, 0xCC));
 	cv::Mat PlotPointNearest(point po, std::vector<std::pair<point,unsigned>> nodes, cv::Scalar color = cv::Scalar(0xFF, 0xCC, 0xCC));
+	cv::Mat PlotPoints(std::vector<point> nodes, cv::Scalar color = cv::Scalar(0xFF, 0xCC, 0xCC));
+	cv::Mat PlotColorfulPoints(std::vector<std::pair<point, cv::Scalar>> nodes);
 	//void PlotShortestPath(cv::Mat &ret, std::vector<unsigned> total_path, point p, int level, cv::Scalar color=cv::Scalar(0xfa,0x9e,0x25));
 	////////////////////////ui////////////////////////
 	static void cmd_showmap();
 	static void cmd_shortestpath();
 	static void cmd_querybox();
 	static void cmd_querynearest();
+	static void cmd_queryname();
+	static void cmd_queryway();
+	static void cmd_querytaxi();
+	static void cmd_shortesttest();
+	static void cmd_insertpoint();
+	static void cmd_queryNearestTaxi();
 	//////////////visit private element///////////////
 	unsigned getNodeIndexById(unsigned id);
 	unsigned getNodeIdByIndex(unsigned index);
 	//////////////////////query///////////////////////
 	std::vector<std::pair<point,unsigned>> querybox(box b);
 	std::vector<std::pair<std::string,point>> queryName(char *P);
+	std::vector<std::pair<std::string,unsigned>> queryNameWay(char *P);
 	std::vector<unsigned> nearest(point p, int k = 1);
 	std::vector<std::pair<point, unsigned>> nearestForPlot(point p, int k = 1);
+
+
+
 private:
 	//bool sortLayerCmp(std::pair<int,std::pair<box, unsigned>> a,std::pair<int,std::pair<box, unsigned>> b);
 	pugi::xml_document doc_osm,doc_plot_conf,doc_speed_conf;
 	//double scalex,scaley,l;
 	//point p;
 
+	///////////////////////////data struct///////////////////
 	std::vector<node_struct> nodevec;
 	std::map<unsigned, unsigned> nodemap; // id -> index
 	std::vector<way_struct> wayvec;
@@ -129,6 +186,7 @@ private:
 	bgi::rtree< std::pair<point,unsigned> , bgi::quadratic<16> > water_line_tree;
 	bgi::rtree< std::pair<box,unsigned> , bgi::quadratic<16> > build_tree;  // box -> index of buildvec
 
+	/////////////////////////Plot////////////////////////////
 	void PlotWay(cv::Mat& ret, point p, double l, double scalex, double scaley, double factor);
 	void PlotWaterWay(cv::Mat& ret, point p, double l, double scalex, double scaley, double factor);
 	void PlotContour(cv::Mat& ret, point p, double l, double scalex, double scaley, double factor);
@@ -164,6 +222,17 @@ private:
 	int index[500000], sa[500000];
 	void build_sa();
 	int cmp_suffix(char *pattern, int p, int m);
+	std::vector<std::pair<std::string, unsigned>> nameListWay;
+	int SA_nWay;
+	char sWay[500000];
+	int indexWay[500000], saWay[500000];
+	void build_saWay();
+	int cmp_suffixWay(char *pattern, int p, int m);
+	//////////////////////////taxi related////////////////////
+	std::vector<taxi_struct> taxiinfo;
+	static int timecmp(short h1,short m1,short s1,short h2,short m2,short s2);
+	void queryNearestTaxi(point p,double r,double time1, double time2);
+
 };
 
 #endif // YWMAP_H

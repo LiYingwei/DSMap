@@ -27,7 +27,9 @@ SOURCES += main.cpp \
     cmd.cpp \
     nearest.cpp \
     visitprivateelement.cpp \
-    query.cpp
+    query.cpp \
+    taxi.cpp \
+    kdtree.cpp
 
 INCLUDEPATH += /usr/local/include/boost /usr/local/include/opencv2 /usr/local/include/
 
@@ -38,7 +40,8 @@ LIBS += -lboost_system-mt #-lboost_filesystem-mt
 HEADERS += \
     ywmap.h \
     Libs/pugixml/pugiconfig.hpp \
-    Libs/pugixml/pugixml.hpp
+    Libs/pugixml/pugixml.hpp \
+    kdtree.h
 
 QMAKE_MAC_SDK = macosx10.11
 

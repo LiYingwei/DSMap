@@ -1,0 +1,42 @@
+➜  taxi git:(taxi) ✗ ./main
+136
+minlat = 30.724108
+maxlat = 31.552053
+minlon = 121.021907
+maxlon = 121.885865
+read takes 2.371603s
+build Finsihed
+nodenum=2110767
+Build takes 2.309402s
+Query 10000 times takes 11.638936s(average = 1163.893555µs)
+➜  taxi git:(taxi) ✗ ./mainSegSet 
+136
+minlat = 30.724108
+maxlat = 31.552053
+minlon = 121.021907
+maxlon = 121.885865
+read takes 2.383360s
+build Finsihed
+nodenum=2110767
+Build takes 1.745830s
+Query 10000 times takes 12.182987s(average = 1218.298706µs)
+➜  taxi git:(taxi) ✗ ./mainWithOutOptimize 
+136
+minlat = 30.724108
+maxlat = 31.552053
+minlon = 121.021907
+maxlon = 121.885865
+read takes 2.325632s
+build Finsihed
+nodenum=2110767
+Build takes 1.110299s
+Query 10000 times takes 10.023614s(average = 1002.361389µs)
+➜  taxi git:(taxi) ✗ ./rtree 
+136
+minlat = 30.724108
+maxlat = 31.552053
+minlon = 121.021907
+maxlon = 121.885865
+read takes 2.353462s
+[RTree]Build Finished!(1.182071s used)
+[RTree]Query 10000 times takes 36.604855s(average = 3660.485352µs)
