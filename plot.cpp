@@ -203,6 +203,87 @@ cv::Mat YWMap::PlotPointNearest(point po, std::vector<std::pair<point,unsigned>>
 	return ret;
 }
 
+cv::Mat YWMap::PlotPoints(std::vector<point> nodes, cv::Scalar color)
+{
+	assert(nodes.size() != 0);
+	double minlat = nodes[0].get<0>(),
+			minlon = nodes[0].get<1>(),
+			maxlat = nodes[0].get<0>(),
+			maxlon = nodes[0].get<1>();
+	for(int i = 1; i < nodes.size(); i++)
+	{
+		minlat = fmin(minlat, nodes[i].get<0>());
+		maxlat = fmax(maxlat, nodes[i].get<0>());
+		minlon = fmin(minlon, nodes[i].get<1>());
+		maxlon = fmax(maxlon, nodes[i].get<1>());
+	}
+	double l = fmax(maxlat - minlat, maxlon - minlon) * 1.3;
+	int level=18;
+	if(l>0.005)level = 17;
+	if(l>0.01) level = 16;
+	if(l>0.02) level = 15;
+	if(l>0.04) level = 14;
+	if(l>0.08) level = 13;
+	if(l>0.16) level = 12;
+	if(l>0.32) level = 11;
+	point P = point((maxlat + minlat)/2, (maxlon + minlon)/2);
+	printf("minlat = %f maxlat = %f minlon = %f maxlon = %f\n", minlat, maxlat, minlon, maxlon);
+	printf("%f %f===level = %d \n",(maxlat + minlat)/2, (maxlon + minlon)/2, level);
+	cv::Mat ret = Plot(P,level);
+	l = 1310.72 * pow(2.0 ,-level);
+	point p(P.get<0>()+l/2,P.get<1>()-l/2);
+	double scale = 2560/l;
+	double scalex = scale;
+	double scaley = scale * cos(p.get<0>());
+
+	for(auto node: nodes)
+	{
+		cv::circle(ret, p2P(node, p, scalex, scaley), 1, color, 3, CV_AA);
+	}
+	return ret;
+}
+
+cv::Mat YWMap::PlotColorfulPoints(std::vector<std::pair<point, cv::Scalar>> nodes)
+{
+	assert(nodes.size() != 0);
+	double minlat = nodes[0].first.get<0>(),
+			minlon = nodes[0].first.get<1>(),
+			maxlat = nodes[0].first.get<0>(),
+			maxlon = nodes[0].first.get<1>();
+	for(int i = 1; i < nodes.size(); i++)
+	{
+		minlat = fmin(minlat, nodes[i].first.get<0>());
+		maxlat = fmax(maxlat, nodes[i].first.get<0>());
+		minlon = fmin(minlon, nodes[i].first.get<1>());
+		maxlon = fmax(maxlon, nodes[i].first.get<1>());
+	}
+	double l = fmax(maxlat - minlat, maxlon - minlon) * 1.3;
+	int level=18;
+	if(l>0.005)level = 17;
+	if(l>0.01) level = 16;
+	if(l>0.02) level = 15;
+	if(l>0.04) level = 14;
+	if(l>0.08) level = 13;
+	if(l>0.16) level = 12;
+	if(l>0.32) level = 11;
+	point P = point((maxlat + minlat)/2, (maxlon + minlon)/2);
+	printf("minlat = %f maxlat = %f minlon = %f maxlon = %f\n", minlat, maxlat, minlon, maxlon);
+	printf("%f %f===level = %d \n",(maxlat + minlat)/2, (maxlon + minlon)/2, level);
+	cv::Mat ret = Plot(P,level);
+	l = 1310.72 * pow(2.0 ,-level);
+	point p(P.get<0>()+l/2,P.get<1>()-l/2);
+	double scale = 2560/l;
+	double scalex = scale;
+	double scaley = scale * cos(p.get<0>());
+
+	for(auto node: nodes)
+	{
+		cv::circle(ret, p2P(node.first, p, scalex, scaley), 1, node.second, 3, CV_AA);
+	}
+	return ret;
+}
+
+
 cv::Mat YWMap::PlotPointInBox(box b, std::vector<std::pair<point, unsigned> > nodes, cv::Scalar color)
 {
 	double minlat = b.min_corner().get<0>(),

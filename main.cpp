@@ -60,12 +60,15 @@ int main(int argc, char *argv[])
 		else if(strcmp(buf, "queryname") == 0) YWMap::cmd_queryname();
 		else if(strcmp(buf, "queryway") == 0) YWMap::cmd_queryway(); //queryway 肇嘉浜路 queryway 世纪大道 queryway 272231909
 		else if(strcmp(buf, "loadtaxi") == 0) map.loadtaxi();
-		else if(strcmp(buf, "querytaxi") == 0) YWMap::cmd_querytaxi();//querytaxi 10944 0:0:0 24:0:0
+		else if(strcmp(buf, "querytaxi") == 0) YWMap::cmd_querytaxi();
+		//querytaxi 10944 0:0:1 23:59:59 2 2 3(最后三个数字代表，输出两个点的信息，分别是第二个点和第三个点)
 		else if(strcmp(buf, "shortesttest") == 0) YWMap::cmd_shortesttest();
 		else if(strcmp(buf, "insertpoint") == 0) YWMap::cmd_insertpoint();
 		//>> querynode 31.2449 121.4886 31.24 121.49
 		//>> insertpoint 31.2440 121.489
 		//>> querynode 31.2449 121.4886 31.24 121.49
+		else if(strcmp(buf, "queryneartaxi") == 0) YWMap::cmd_queryNearestTaxi();
+		//queryneartaxi 31.2363 121.4690 0.01 21:0:0 3600
 
 		else printf("cmd not FOUND\n");
 		//else if(strcmp(buf, ""))

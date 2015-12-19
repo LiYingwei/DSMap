@@ -14,9 +14,11 @@ struct Node
 {
 	int id;
 	point3 p;
+	int type;
 	double x() const{return this->p.x;}
 	double y() const{return this->p.y;}
 	double z() const{return this->p.z;}
+	Node(int id=0, double x=0, double y=0, double z=0):id(id),p(x,y,z){}
 };
 
 struct KDNode

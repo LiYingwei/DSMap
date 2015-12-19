@@ -15,7 +15,7 @@ KDNode* KDTree::build(Node *node, int l, int r)
 	if(l==r) return new KDNode(node[l].id, node[l].p, node[l].p, node[l].p);
 	else if(r<l) return nullptr;
 	int mid = (l+r)>>1;
-	double minx = 1000, miny = 1000, minz = 1000, maxx = -1000, maxy = -1000, maxz = -1000;
+	double minx = 1000000, miny = 1000000, minz = 1000000, maxx = -1000000, maxy = -1000000, maxz = -1000000;
 	double varx = 0, vary = 0, varz = 0, avgx = 0, avgy = 0, avgz=0;
 	for (int i = l; i <= r; i++) {
 			minx = fmin(minx, node[i].x());

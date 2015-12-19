@@ -167,12 +167,12 @@ void YWMap::cmd_querytaxi()
 	};
 	int s = std::lower_bound(map.taxiinfo.begin(),map.taxiinfo.end(),taxi_struct(id,h1,m1,s1),cmp) - map.taxiinfo.begin();
 	int t = std::upper_bound(map.taxiinfo.begin(),map.taxiinfo.end(),taxi_struct(id,h2,m2,s2),cmp) - map.taxiinfo.begin();
-	static std::vector<point> total_path;
+	static std::vector<point> total_path; total_path.clear();
 	//printf("[DEBUG] s = %d t = %d\n", s,t);
 	for(int i = s; i < t; i++)
 	{
 		total_path.push_back(point(map.taxiinfo[i].lat,map.taxiinfo[i].lon));
-		if(++cnt == queryvec[queryvec.size() - 1])
+		if(queryvec.size() && ++cnt == queryvec[queryvec.size() - 1])
 		{
 			map.taxiinfo[i].print();
 			queryvec.pop_back();
@@ -228,4 +228,16 @@ void YWMap::cmd_insertpoint()
 	double lat,lon;
 	scanf("%lf%lf",&lat,&lon);
 	map.way_node_tree.insert(std::make_pair(point(lat,lon),0));
+}
+
+void YWMap::cmd_queryNearestTaxi()
+{
+	point p;
+	double r,time1,time2,x,y;
+	int hh,mm,ss;
+	scanf("%lf %lf %lf %d:%d:%d %lf", &x, &y, &r, &hh, &mm, &ss, &time2);
+	time1 = 3600.0 * hh + 60.0 * mm + ss;
+	time2 += time1;
+	p = point(x,y);
+	map.queryNearestTaxi(p,r,time1,time2);
 }

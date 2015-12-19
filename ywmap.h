@@ -104,7 +104,7 @@ struct taxi_struct
 				   &id,t,&alert,&lon,&lat,&empty,&light,&high,&brake,&v,&dir,&satellite);
 		sscanf(t,"%s%s",date,stime);
 		sscanf(stime,"%hd:%hd:%hd", &hh,&mm,&ss);
-	};
+	}
 	void print()
 	{
 		printf("%d,%hd:%hd:%hd,%hd,%lf,%lf,%hd,%c,%hd,%hd,%lf,%lf,%hd\n",
@@ -114,6 +114,7 @@ struct taxi_struct
 	{
 		return lon < o.lon;
 	}
+	int time() const{return (int)hh * 3600 + (int)mm * 60 + (int)ss;}
 };
 
 class YWMap
@@ -136,6 +137,8 @@ public:
 	cv::Mat PlotPath(std::vector<point> total_path, cv::Scalar color=cv::Scalar(0x00,0x00,0xFF));
 	cv::Mat PlotPointInBox(box b, std::vector<std::pair<point,unsigned>> nodes, cv::Scalar color = cv::Scalar(0xFF, 0xCC, 0xCC));
 	cv::Mat PlotPointNearest(point po, std::vector<std::pair<point,unsigned>> nodes, cv::Scalar color = cv::Scalar(0xFF, 0xCC, 0xCC));
+	cv::Mat PlotPoints(std::vector<point> nodes, cv::Scalar color = cv::Scalar(0xFF, 0xCC, 0xCC));
+	cv::Mat PlotColorfulPoints(std::vector<std::pair<point, cv::Scalar>> nodes);
 	//void PlotShortestPath(cv::Mat &ret, std::vector<unsigned> total_path, point p, int level, cv::Scalar color=cv::Scalar(0xfa,0x9e,0x25));
 	////////////////////////ui////////////////////////
 	static void cmd_showmap();
@@ -147,6 +150,7 @@ public:
 	static void cmd_querytaxi();
 	static void cmd_shortesttest();
 	static void cmd_insertpoint();
+	static void cmd_queryNearestTaxi();
 	//////////////visit private element///////////////
 	unsigned getNodeIndexById(unsigned id);
 	unsigned getNodeIdByIndex(unsigned index);
@@ -227,6 +231,7 @@ private:
 	//////////////////////////taxi related////////////////////
 	std::vector<taxi_struct> taxiinfo;
 	static int timecmp(short h1,short m1,short s1,short h2,short m2,short s2);
+	void queryNearestTaxi(point p,double r,double time1, double time2);
 
 };
 
