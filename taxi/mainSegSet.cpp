@@ -50,32 +50,17 @@ struct segmentTreeNode
 	segmentTreeNode *lch,*rch;
 	double minlon, maxlon;
 	//vector<pair<double,unsigned> > p; // lat -> index
-	map<double,unsigned> p;
+	multimap<double,unsigned> p;
 };
 
 
 void pushup(segmentTreeNode &rt)
 {
 	assert(rt.lch || rt.rch);
-	if(rt.lch==NULL)
-	{
-		rt.minlon = rt.rch -> minlon;
-		rt.maxlon = rt.rch -> maxlon;
-		rt.p = rt.rch -> p;
-	}
-	else if(rt.rch==NULL)
-	{
-		rt.minlon = rt.lch -> minlon;
-		rt.maxlon = rt.lch -> maxlon;
-		rt.p = rt.lch -> p;
-	}
-	else
-	{
-		rt.minlon = min(rt.lch -> minlon, rt.rch -> minlon);
-		rt.maxlon = max(rt.lch -> maxlon, rt.rch -> maxlon);
-		for(auto it = rt.lch->p.begin(); it != rt.lch -> p.end(); it++) rt.p.insert(*it);
-		for(auto it = rt.rch->p.begin(); it != rt.rch -> p.end(); it++) rt.p.insert(*it);
-	}
+	rt.minlon = min(rt.lch -> minlon, rt.rch -> minlon);
+	rt.maxlon = max(rt.lch -> maxlon, rt.rch -> maxlon);
+	for(auto it = rt.lch->p.begin(); it != rt.lch -> p.end(); it++) rt.p.insert(*it);
+	for(auto it = rt.rch->p.begin(); it != rt.rch -> p.end(); it++) rt.p.insert(*it);
 }
 int nodenum=0;
 void build(int l,int r,segmentTreeNode &rt)
@@ -107,15 +92,12 @@ void query(double minlat,double maxlat,double minlon,double maxlon,const segment
 {
 	if(minlon <= rt.minlon && rt.maxlon <= maxlon)
 	{
-		//printf("%f %f\n",rt.minlon, rt.maxlon);
-		//for(int i=Lpt;i<=min((int)rt.p.size()-1,Rpt);i++)
 		for(auto it=rt.p.lower_bound(minlat); (it!=rt.p.end()) && (it->first <= maxlat); it++)
 		{
-			/*if(it->first <= maxlat && it->first >= minlat)*/ ansvec.push_back(it->second);
+			ansvec.push_back(it->second);
 		}
 		return;
 	}
-	//printf("-%f %f\n",rt.minlon, rt.maxlon);
 	if(rt.lch!=NULL && minlon <= rt.lch->maxlon)query(minlat,maxlat,minlon,maxlon, *rt.lch, ansvec);
 	if(rt.rch!=NULL && maxlon >= rt.rch->minlon)query(minlat,maxlat,minlon,maxlon, *rt.rch, ansvec);
 }
@@ -125,9 +107,6 @@ void query(double minlat,double maxlat,double minlon,double maxlon,const segment
 vector<unsigned> Query(double minlat,double maxlat,double minlon,double maxlon,const segmentTreeNode &rt)
 {
 	static vector<unsigned> ret; ret.clear();
-	//auto cmp = [] (const pair<double,unsigned> &a,const pair<double,unsigned> &b) -> bool{return a.first < b.first;};
-	//int Lpt = lower_bound(rt.p.begin(),rt.p.end(),mp(minlat,0U)) - rt.p.begin();
-	//int Rpt = lower_bound(rt.p.begin(),rt.p.end(),mp(maxlat,0U)) - rt.p.begin();
 	query(minlat,maxlat,minlon,maxlon,rt,ret);
 	return ret;
 }
@@ -137,8 +116,7 @@ vector<unsigned> Query(double minlat,double maxlat,double minlon,double maxlon,c
 	
 void readin()
 {
-	//freopen("/Users/SpaceQ/iNut/151/Data Structure/PJ/shanghai_taxi_20150401_min.csv","r",stdin);
-	FILE *fp=fopen("/Users/SpaceQ/iNut/151/Data Structure/PJ/shanghai_taxi_20150401.csv","r");
+	FILE *fp=fopen("/Users/SpaceQ/iNut/151/Data Structure/PJ/shanghai_taxi_20150401_min5.csv","r");
 	char buf[120];
 	int cnt=0;
 	double minlat = 180,maxlat = 0,minlon = 180,maxlon = 0;
@@ -155,7 +133,6 @@ void readin()
 		maxlat = max(maxlat, tmp.lat);
 		minlon = min(minlon, tmp.lon);
 		maxlon = max(maxlon, tmp.lon);
-		//tmp.print();
 	}
 	printf("%d\n",cnt);
 	printf("minlat = %f\nmaxlat = %f\nminlon = %f\nmaxlon = %f\n", 
@@ -185,9 +162,6 @@ int main()
 		static vector<unsigned> ans;
 		ans.clear();
 		ans = Query(minlat,maxlat,minlon,maxlon,root);
-		//for(int i=0;i<ans.size();i++)
-		//	printf("%u ",ans[i]);
-		//printf("\n");
 	}
 	t = clock() - t;
 	printf("Query %d times takes %fs(average = %fµs)\n",
