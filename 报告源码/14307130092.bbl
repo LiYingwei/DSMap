@@ -1,0 +1,14 @@
+\begin{thebibliography}{1}
+
+\bibitem{DBLP:journals/corr/abs-1304-4661}
+Takuya Akiba, Yoichi Iwata, and Yuichi Yoshida.
+\newblock Fast exact shortest-path distance queries on large networks by pruned
+  landmark labeling.
+\newblock {\em CoRR}, abs/1304.4661, 2013.
+
+\bibitem{wiki:xxx}
+Wikipedia.
+\newblock Fractional cascading --- wikipedia{,} the free encyclopedia, 2014.
+\newblock [Online; accessed 19-December-2015].
+
+\end{thebibliography}
